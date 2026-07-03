@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+
+# Environment files 
+.env
+*.env
+
+# Build outputs
+dist/
+build/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Docker volumes
+data/

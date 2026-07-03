@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========== ENUMS ==========
+
+enum Role {
+  customer
+  contractor
+  admin
+}
+
+enum VerificationStatus {
+  pending
+  verified
+  rejected
+}
+
+enum EscrowStatus {
+  created
+  held
+  released
+  refunded
+}
+
+enum JobStatus {
+  draft
+  open
+  quoted
+  accepted
+  milestone1_pending
+  milestone1_verified
+  milestone2_pending
+  completed
+  disputed
+  cancelled
+}
+
+// ========== TABLES ==========
+
+model User {
+  id                    String              @id @default(uuid())
+  email                 String              @unique
+  password_hash         String
+  role                  Role                @default(customer)
+  full_name             String
+  phone                 String?
+  is_active             Boolean             @default(true)
+  last_login            DateTime?
+  verification_status   VerificationStatus  @default(pending)
+  notification_preference Json?              // JSONB
+  popia_consent         Boolean             @default(false)
+  data_retention_date   DateTime?
+  created_at            DateTime            @default(now())
+  updated_at            DateTime            @updatedAt
+
+  // Relations
+  jobs_as_customer      Job[]               @relation("CustomerJobs")
+  jobs_as_contractor    Job[]               @relation("ContractorJobs")
+  admin_logs            AdminLog[]          @relation("AdminLogs")
+
+  @@index([email])
+  @@index([verification_status])
+}
+
+model EscrowTransaction {
+  id                    String          @id @default(uuid())
+  job_id                String          @unique   // ← fixed: added @unique
+  stripe_payment_intent_id String?
+  stripe_transfer_id    String?
+  idempotency_key       String?         @unique   // ← kept @unique here
+  amount_total          Decimal?        @db.Decimal(10,2)
+  amount_contractor     Decimal?        @db.Decimal(10,2)
+  amount_platform       Decimal?        @db.Decimal(10,2)
+  status                EscrowStatus    @default(created)
+  admin_clawback_rever  Boolean?
+  created_at            DateTime        @default(now())
+
+  // Relations
+  job                   Job             @relation(fields: [job_id], references: [id])
+
+  @@index([job_id])
+  // @@unique([idempotency_key])  // ← removed: already defined as @unique above
+}
+
+model Job {
+  id                    String          @id @default(uuid())
+  customer_id           String
+  contractor_id         String?
+  status                JobStatus       @default(draft)
+  location              String?         // simplified as lat,lng string
+  travel_fee            Decimal?        @db.Decimal(10,2)
+  total_value           Decimal?        @db.Decimal(10,2)
+  created_at            DateTime        @default(now())
+  updated_at            DateTime        @updatedAt
+
+  // Relations
+  customer              User            @relation("CustomerJobs", fields: [customer_id], references: [id])
+  contractor            User?           @relation("ContractorJobs", fields: [contractor_id], references: [id])
+  escrow_transaction    EscrowTransaction?  // optional reverse relation (one‑to‑one)
+
+  @@index([status])
+}
+
+model AdminLog {
+  id                    String          @id @default(uuid())
+  request_id            String
+  admin_id              String
+  action                String
+  target_type           String
+  before_state          Json?
+  after_state           Json?
+  ip_address            String?
+  created_at            DateTime        @default(now())
+
+  // Relations
+  admin                 User            @relation("AdminLogs", fields: [admin_id], references: [id])
+
+  @@index([created_at])
+}
