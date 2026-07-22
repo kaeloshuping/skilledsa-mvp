@@ -13,26 +13,32 @@ export class BaseRepository<T, CreateInput, UpdateInput> {
   constructor(private model: Prisma.ModelName) {}
 
   async create(data: CreateInput): Promise<T> {
-    return (prisma as any)[this.model].create({ data });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (prisma as any)[this.model].create({ data }) as Promise<T>;
   }
 
   async findById(id: string): Promise<T | null> {
-    return (prisma as any)[this.model].findUnique({ where: { id } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (prisma as any)[this.model].findUnique({ where: { id } }) as Promise<T | null>;
   }
 
-  async findAll(params?: { where?: any; include?: any; skip?: number; take?: number }): Promise<T[]> {
-    return (prisma as any)[this.model].findMany(params || {});
+  async findAll(params?: { where?: unknown; include?: unknown; skip?: number; take?: number }): Promise<T[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (prisma as any)[this.model].findMany(params || {}) as Promise<T[]>;
   }
 
   async update(id: string, data: UpdateInput): Promise<T> {
-    return (prisma as any)[this.model].update({ where: { id }, data });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (prisma as any)[this.model].update({ where: { id }, data }) as Promise<T>;
   }
 
   async delete(id: string): Promise<T> {
-    return (prisma as any)[this.model].delete({ where: { id } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (prisma as any)[this.model].delete({ where: { id } }) as Promise<T>;
   }
 
-  async count(where?: any): Promise<number> {
-    return (prisma as any)[this.model].count({ where });
+  async count(where?: unknown): Promise<number> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (prisma as any)[this.model].count({ where }) as Promise<number>;
   }
 }
