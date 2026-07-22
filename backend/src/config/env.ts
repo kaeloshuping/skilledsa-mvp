@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import dotenv from 'dotenv';
+import { z } from "zod";
+import dotenv from "dotenv";
 
 // Load environment variables from .env
 dotenv.config();
@@ -10,9 +10,11 @@ dotenv.config();
  */
 const envSchema = z.object({
   // App
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  NODE_ENV: z
+    .enum(["development", "test", "production"])
+    .default("development"),
   PORT: z.coerce.number().default(3000),
-  APP_NAME: z.string().default('SkilledSA'),
+  APP_NAME: z.string().default("SkilledSA"),
   API_URL: z.string().url(),
   FRONTEND_URL: z.string().url(),
 
@@ -21,11 +23,11 @@ const envSchema = z.object({
   REDIS_URL: z.string().url(),
 
   // JWT (RS256) – private/public keys (must be in PEM format)
-  JWT_PRIVATE_KEY: z.string().min(1, 'JWT private key is required'),
-  JWT_PUBLIC_KEY: z.string().min(1, 'JWT public key is required'),
+  JWT_PRIVATE_KEY: z.string().min(1, "JWT private key is required"),
+  JWT_PUBLIC_KEY: z.string().min(1, "JWT public key is required"),
 
   // AWS S3
-  AWS_REGION: z.string().default('af-south-1'),
+  AWS_REGION: z.string().default("af-south-1"),
   AWS_ACCESS_KEY_ID: z.string().min(1),
   AWS_SECRET_ACCESS_KEY: z.string().min(1),
   S3_BUCKET_NAME: z.string().min(1),
@@ -41,14 +43,14 @@ const envSchema = z.object({
   TWILIO_PHONE_NUMBER: z.string().min(1),
 
   // Logging
-  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+  LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
   LOG_FILE_PATH: z.string().optional(),
 
   // Rate limiting
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000), // 15 min
-  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(5),   // for login
+  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(5), // for login
   RATE_LIMIT_GENERAL_WINDOW_MS: z.coerce.number().default(60000), // 1 min
-  RATE_LIMIT_GENERAL_MAX: z.coerce.number().default(100),  // requests per minute
+  RATE_LIMIT_GENERAL_MAX: z.coerce.number().default(100), // requests per minute
 
   // Feature flags
   FEATURE_REFERRALS: z.coerce.boolean().default(false),
