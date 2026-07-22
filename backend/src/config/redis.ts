@@ -1,4 +1,5 @@
-import Redis from 'ioredis';
+// src/config/redis.ts
+import { Redis } from 'ioredis';
 import { env } from './env.js';
 
 /**
@@ -8,7 +9,7 @@ import { env } from './env.js';
  */
 const redis = new Redis(env.REDIS_URL);
 
-redis.on('error', (err) => {
+redis.on('error', (err: Error) => {
   console.error('❌ Redis error:', err);
 });
 
