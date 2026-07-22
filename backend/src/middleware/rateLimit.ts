@@ -1,5 +1,5 @@
 import rateLimit from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
+import { RedisStore } from 'rate-limit-redis';
 import redis from '../config/redis.js';
 import { env } from '../config/env.js';
 
@@ -10,15 +10,17 @@ import { env } from '../config/env.js';
  */
 export const loginLimiter = rateLimit({
   store: new RedisStore({
-    sendCommand: (...args) => redis.call(...args),
+    sendCommand: (command: string, ...args: string[]) =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      redis.call(command, ...args) as Promise<any>,
   }),
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: env.RATE_LIMIT_MAX_REQUESTS,
-  keyGenerator: (req) => req.ip, // or use req.body.email for per‑user limits
-  skipSuccessfulRequests: false,  // counts all attempts (including failures)
+  keyGenerator: (req) => req.ip || req.connection?.remoteAddress || 'unknown',
+  skipSuccessfulRequests: false,
   message: { error: 'Too many login attempts. Please try again later.' },
-  standardHeaders: true,          // Return rate limit info in `RateLimit-*` headers
-  legacyHeaders: false,           // Disable `X-RateLimit-*` headers
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 /**
@@ -27,11 +29,13 @@ export const loginLimiter = rateLimit({
  */
 export const generalLimiter = rateLimit({
   store: new RedisStore({
-    sendCommand: (...args) => redis.call(...args),
+    sendCommand: (command: string, ...args: string[]) =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      redis.call(command, ...args) as Promise<any>,
   }),
   windowMs: env.RATE_LIMIT_GENERAL_WINDOW_MS,
   max: env.RATE_LIMIT_GENERAL_MAX,
-  keyGenerator: (req) => req.ip,
+  keyGenerator: (req) => req.ip || req.connection?.remoteAddress || 'unknown',
   message: { error: 'Too many requests. Please slow down.' },
   standardHeaders: true,
   legacyHeaders: false,
