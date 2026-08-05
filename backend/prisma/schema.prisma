@@ -11,21 +11,21 @@ datasource db {
 // ENUMS
 // ============================================
 
-/** User roles in the system */
+// /** User roles in the system */
 enum Role {
   customer
   contractor
   admin
 }
 
-/** Verification status for user identities and documents */
+// /** Verification status for user identities and documents */
 enum VerificationStatus {
   pending
   verified
   rejected
 }
 
-/** Lifecycle of an escrow transaction */
+// /** Lifecycle of an escrow transaction */
 enum EscrowStatus {
   created
   held
@@ -33,7 +33,7 @@ enum EscrowStatus {
   refunded
 }
 
-/** State machine for a job’s progress */
+// /** State machine for a job’s progress */
 enum JobStatus {
   draft
   open
@@ -51,10 +51,10 @@ enum JobStatus {
 // MODELS
 // ============================================
 
-/**
- * User – core account data.
- * All fields follow snake_case to match PostgreSQL naming conventions.
- */
+
+//  * User – core account data.
+//  * All fields follow snake_case to match PostgreSQL naming conventions.
+
 model User {
   id                      String              @id @default(uuid())
   email                   String              @unique
@@ -85,10 +85,10 @@ model User {
   @@index([verification_status])
 }
 
-/**
- * VerificationRequest – holds documents and admin review status.
- * One‑to‑one with User (a user has one request).
- */
+
+//  * VerificationRequest – holds documents and admin review status.
+//  * One‑to‑one with User (a user has one request).
+
 model VerificationRequest {
   id               String            @id @default(uuid())
   user_id          String            @unique
@@ -109,9 +109,9 @@ model VerificationRequest {
   @@index([created_at])
 }
 
-/**
- * RefreshToken – stores JWT refresh tokens (hashed) for rotation.
- */
+
+//  * RefreshToken – stores JWT refresh tokens (hashed) for rotation.
+ 
 model RefreshToken {
   id          String   @id @default(uuid())
   user_id     String
@@ -125,10 +125,10 @@ model RefreshToken {
   @@index([expires_at])
 }
 
-/**
- * FileUpload – tracks files stored in S3 (or MinIO locally).
- * Used for all uploads: photos, documents, etc.
- */
+
+//  * FileUpload – tracks files stored in S3 (or MinIO locally).
+//  * Used for all uploads: photos, documents, etc.
+
 model FileUpload {
   id          String   @id @default(uuid())
   url         String   // Publicly accessible URL (presigned or CDN)
@@ -145,10 +145,10 @@ model FileUpload {
   @@index([expires_at])
 }
 
-/**
- * EscrowTransaction – holds payment data for a job.
- * One‑to‑one with Job.
- */
+
+//  * EscrowTransaction – holds payment data for a job.
+//  * One‑to‑one with Job.
+
 model EscrowTransaction {
   id                    String          @id @default(uuid())
   job_id                String          @unique
@@ -167,10 +167,10 @@ model EscrowTransaction {
   @@index([job_id])
 }
 
-/**
- * Job – the core listing, with geospatial location.
- * location is stored as a PostGIS geography(Point,4326) – see migration SQL.
- */
+
+//  * Job – the core listing, with geospatial location.
+//  * location is stored as a PostGIS geography(Point,4326) – see migration SQL.
+
 model Job {
   id                    String          @id @default(uuid())
   customer_id           String
@@ -190,10 +190,10 @@ model Job {
   // GIST index for location is created via raw SQL in migration
 }
 
-/**
- * AdminLog – audit trail for all admin actions.
- * Uses BRIN index on created_at for efficiency (see migration).
- */
+
+//  * AdminLog – audit trail for all admin actions.
+//  * Uses BRIN index on created_at for efficiency (see migration).
+
 model AdminLog {
   id                    String          @id @default(uuid())
   request_id            String          @db.Uuid // X‑Request‑ID from middleware

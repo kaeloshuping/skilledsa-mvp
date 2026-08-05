@@ -1,5 +1,5 @@
-import prisma from '../config/database.js';
-import { Prisma } from '@prisma/client';
+import prisma from "../config/database.js";
+import { Prisma } from "@prisma/client";
 
 /**
  * Generic repository class providing basic CRUD operations.
@@ -19,17 +19,27 @@ export class BaseRepository<T, CreateInput, UpdateInput> {
 
   async findById(id: string): Promise<T | null> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (prisma as any)[this.model].findUnique({ where: { id } }) as Promise<T | null>;
+    return (prisma as any)[this.model].findUnique({
+      where: { id },
+    }) as Promise<T | null>;
   }
 
-  async findAll(params?: { where?: unknown; include?: unknown; skip?: number; take?: number }): Promise<T[]> {
+  async findAll(params?: {
+    where?: unknown;
+    include?: unknown;
+    skip?: number;
+    take?: number;
+  }): Promise<T[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (prisma as any)[this.model].findMany(params || {}) as Promise<T[]>;
   }
 
   async update(id: string, data: UpdateInput): Promise<T> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (prisma as any)[this.model].update({ where: { id }, data }) as Promise<T>;
+    return (prisma as any)[this.model].update({
+      where: { id },
+      data,
+    }) as Promise<T>;
   }
 
   async delete(id: string): Promise<T> {

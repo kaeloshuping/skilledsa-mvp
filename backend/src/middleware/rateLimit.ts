@@ -1,7 +1,7 @@
-import rateLimit from 'express-rate-limit';
-import { RedisStore } from 'rate-limit-redis';
-import redis from '../config/redis.js';
-import { env } from '../config/env.js';
+import rateLimit from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
+import redis from "../config/redis.js";
+import { env } from "../config/env.js";
 
 /**
  * Rate limiter for login endpoints.
@@ -16,9 +16,9 @@ export const loginLimiter = rateLimit({
   }),
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: env.RATE_LIMIT_MAX_REQUESTS,
-  keyGenerator: (req) => req.ip || req.connection?.remoteAddress || 'unknown',
+  keyGenerator: (req) => req.ip || req.connection?.remoteAddress || "unknown",
   skipSuccessfulRequests: false,
-  message: { error: 'Too many login attempts. Please try again later.' },
+  message: { error: "Too many login attempts. Please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -35,8 +35,8 @@ export const generalLimiter = rateLimit({
   }),
   windowMs: env.RATE_LIMIT_GENERAL_WINDOW_MS,
   max: env.RATE_LIMIT_GENERAL_MAX,
-  keyGenerator: (req) => req.ip || req.connection?.remoteAddress || 'unknown',
-  message: { error: 'Too many requests. Please slow down.' },
+  keyGenerator: (req) => req.ip || req.connection?.remoteAddress || "unknown",
+  message: { error: "Too many requests. Please slow down." },
   standardHeaders: true,
   legacyHeaders: false,
 });
