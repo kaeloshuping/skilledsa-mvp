@@ -1,5 +1,7 @@
 import { z } from "zod";
 import dotenv from "dotenv";
+import path from "path";
+import fs from "fs";
 
 // Load environment variables from .env
 dotenv.config();
@@ -22,9 +24,9 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
 
-  // JWT (RS256) – private/public keys (must be in PEM format)
-  JWT_PRIVATE_KEY: z.string().min(1, "JWT private key is required"),
-  JWT_PUBLIC_KEY: z.string().min(1, "JWT public key is required"),
+  // JWT (RS256) – paths to PEM files
+  JWT_PRIVATE_KEY_PATH: z.string().min(1, "JWT private key path is required"),
+  JWT_PUBLIC_KEY_PATH: z.string().min(1, "JWT public key path is required"),
 
   // AWS S3
   AWS_REGION: z.string().default("af-south-1"),
