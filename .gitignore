@@ -20,3 +20,5 @@ Thumbs.db
 
 # Docker volumes
 data/
+
+*.pem
