@@ -154,18 +154,20 @@
   font-weight: 600;
 }
 
+/* Password hints */
 .passwordHints {
-  margin-top: 6px;
-  font-size: 13px;
+  margin-top: var(--spacing-xs);
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .hintValid {
-  color: #2E8B57; /* success green */
+  color: var(--color-secondary-success);
+  font-size: 13px;
 }
 
 .hintInvalid {
-  color: #7F8C8D; /* muted grey */
+  color: var(--color-secondary-error);
+  font-size: 13px;
 }
