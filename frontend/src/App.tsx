@@ -8,8 +8,13 @@ import { Signup } from './pages/auth/Signup';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { VerificationUpload } from './pages/VerificationUpload';
 import { VerificationPending } from './pages/VerificationPending';
-import { Landing } from './pages/Landing'; // <-- NEW
+import { Landing } from './pages/Landing';
+import { ToastContainer } from './components/common/ToastContainer';
 import { getLogger } from './utils/logger';
+
+// Admin pages
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { VerificationQueue } from './pages/admin/VerificationQueue';
 
 const log = getLogger('App');
 
@@ -20,6 +25,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ToastContainer />
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Landing />} />
@@ -27,11 +33,26 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
+        {/* Admin authentication routes (public) */}
+        <Route path="/admin/login" element={<Login redirectTo="/admin/dashboard" />} />
+        <Route
+          path="/admin/signup"
+          element={<Signup allowedRoles={['admin']} redirectTo="/admin/dashboard" />}
+        />
+
         {/* Protected routes (require authentication) */}
         <Route element={<ProtectedRoute />}>
           <Route path="/verify" element={<VerificationUpload />} />
           <Route path="/verification-pending" element={<VerificationPending />} />
           <Route path="/dashboard" element={<div>Dashboard (coming soon)</div>} />
+        </Route>
+
+        {/* Admin routes (require admin role) */}
+        <Route element={<ProtectedRoute allowedRoles={['admin']} redirectTo="/admin/login" />}>
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/verifications" element={<VerificationQueue />} />
+          {/* Add other admin routes as needed */}
         </Route>
 
         {/* Catch-all redirect */}

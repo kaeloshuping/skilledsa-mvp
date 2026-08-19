@@ -1,6 +1,6 @@
 // src/pages/auth/Signup.tsx
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { RoleSelector } from '../../components/auth/RoleSelector';
 import type { Role } from '../../components/auth/RoleSelector';
@@ -9,8 +9,17 @@ import { getLogger } from '../../utils/logger';
 
 const log = getLogger('Signup');
 
-export const Signup: React.FC = () => {
+interface SignupProps {
+  allowedRoles?: Role[]; // restrict which roles are shown
+  redirectTo?: string;   // where to redirect after signup
+}
+
+export const Signup: React.FC<SignupProps> = ({
+  allowedRoles = ['customer', 'contractor'], // default for public signup
+  redirectTo = '/verify',                    // default for customers/contractors
+}) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signup, isLoading, error, clearError } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -21,25 +30,18 @@ export const Signup: React.FC = () => {
   const [popiaConsent, setPopiaConsent] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // --- START FIX: Password validation helpers ---
+  // Password validation helpers
   const passwordHasUppercase = (pwd: string) => /[A-Z]/.test(pwd);
   const passwordHasNumber = (pwd: string) => /[0-9]/.test(pwd);
   const passwordIsLongEnough = (pwd: string) => pwd.length >= 8;
 
   const getPasswordErrors = (pwd: string): string[] => {
     const errors: string[] = [];
-    if (!passwordIsLongEnough(pwd)) {
-      errors.push('at least 8 characters');
-    }
-    if (!passwordHasUppercase(pwd)) {
-      errors.push('at least one uppercase letter');
-    }
-    if (!passwordHasNumber(pwd)) {
-      errors.push('at least one number');
-    }
+    if (!passwordIsLongEnough(pwd)) errors.push('at least 8 characters');
+    if (!passwordHasUppercase(pwd)) errors.push('at least one uppercase letter');
+    if (!passwordHasNumber(pwd)) errors.push('at least one number');
     return errors;
   };
-  // --- END FIX ---
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,13 +58,11 @@ export const Signup: React.FC = () => {
       return;
     }
 
-    // --- START FIX: Enhanced password validation ---
     const passwordErrors = getPasswordErrors(password);
     if (passwordErrors.length > 0) {
       setLocalError(`Password must contain: ${passwordErrors.join(', ')}`);
       return;
     }
-    // --- END FIX ---
 
     console.log('[FE1] - Signup submitted', { email, role, fullName });
 
@@ -75,22 +75,27 @@ export const Signup: React.FC = () => {
         phone: phone || undefined,
         popia_consent: popiaConsent,
       });
-      // Redirect to verification upload
-      navigate('/verify');
-      log.info('Signup successful, redirecting to verification');
+      // Redirect to the specified path
+      navigate(redirectTo);
+      log.info('Signup successful, redirecting to', redirectTo);
     } catch (err) {
-      // Error is already set in store, but we can show it
       console.error('[FE1] - Signup error', err);
     }
   };
+
+  // Determine login link based on current route
+  const loginPath = location.pathname.startsWith('/admin') ? '/admin/login' : '/login';
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.title}>Create Account</h1>
-        <p className={styles.subtitle}>Join SkilledSA as a customer or contractor</p>
+        <p className={styles.subtitle}>
+          {allowedRoles.includes('admin') ? 'Admin' : 'Join'} SkilledSA
+        </p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
+          {/* ... fields unchanged ... */}
           <div className={styles.field}>
             <label htmlFor="fullName">Full Name</label>
             <input
@@ -124,25 +129,23 @@ export const Signup: React.FC = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min 8 characters, with uppercase and number"
+              placeholder="Min 8 chars, uppercase & number"
               required
               disabled={isLoading}
             />
-            {/* --- START FIX: Live password requirement hints --- */}
             {password.length > 0 && (
               <div className={styles.passwordHints}>
                 <p className={passwordIsLongEnough(password) ? styles.hintValid : styles.hintInvalid}>
-                  ✓ {passwordIsLongEnough(password) ? 'At least 8 characters' : 'At least 8 characters (need more)'}
+                  {passwordIsLongEnough(password) ? '✅' : '❌'} At least 8 characters
                 </p>
                 <p className={passwordHasUppercase(password) ? styles.hintValid : styles.hintInvalid}>
-                  ✓ {passwordHasUppercase(password) ? 'Contains uppercase letter' : 'Needs at least one uppercase letter'}
+                  {passwordHasUppercase(password) ? '✅' : '❌'} Contains uppercase letter
                 </p>
                 <p className={passwordHasNumber(password) ? styles.hintValid : styles.hintInvalid}>
-                  ✓ {passwordHasNumber(password) ? 'Contains a number' : 'Needs at least one number'}
+                  {passwordHasNumber(password) ? '✅' : '❌'} Contains a number
                 </p>
               </div>
             )}
-            {/* --- END FIX --- */}
           </div>
 
           <div className={styles.field}>
@@ -162,7 +165,7 @@ export const Signup: React.FC = () => {
             <RoleSelector
               selectedRole={role}
               onChange={setRole}
-              allowedRoles={['customer', 'contractor']}
+              allowedRoles={allowedRoles}
               error={!role && localError ? 'Please select a role' : undefined}
             />
           </div>
@@ -194,7 +197,7 @@ export const Signup: React.FC = () => {
           </button>
 
           <p className={styles.footer}>
-            Already have an account? <Link to="/login">Log in</Link>
+            Already have an account? <Link to={loginPath}>Log in</Link>
           </p>
         </form>
       </div>

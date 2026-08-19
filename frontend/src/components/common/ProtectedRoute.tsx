@@ -9,12 +9,9 @@ const log = getLogger('ProtectedRoute');
 interface ProtectedRouteProps {
   requireVerification?: boolean;
   allowedRoles?: string[];
-  redirectTo?: string;
+  redirectTo?: string; // custom redirect for unauthenticated
 }
 
-/**
- * Route guard that checks authentication and optionally verification status and roles.
- */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireVerification = false,
   allowedRoles,
@@ -23,11 +20,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div>Loading...</div>; // Or a proper spinner
+    return <div>Loading...</div>;
   }
 
   if (!isAuthenticated) {
-    log.warn('Unauthenticated access, redirecting to login');
+    log.warn('Unauthenticated access, redirecting to', redirectTo);
     return <Navigate to={redirectTo} replace />;
   }
 
