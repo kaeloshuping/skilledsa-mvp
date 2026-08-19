@@ -1,20 +1,64 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+// src/App.tsx
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useAuthStore } from './stores/authStore';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
+import { Login } from './pages/auth/Login';
+import { Signup } from './pages/auth/Signup';
+import { ForgotPassword } from './pages/auth/ForgotPassword';
+import { VerificationUpload } from './pages/VerificationUpload';
+import { VerificationPending } from './pages/VerificationPending';
+import { Landing } from './pages/Landing';
+import { ToastContainer } from './components/common/ToastContainer';
+import { getLogger } from './utils/logger';
+
+// Admin pages
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { VerificationQueue } from './pages/admin/VerificationQueue';
+
+const log = getLogger('App');
 
 function App() {
-  const [status, setStatus] = useState('Loading...');
-
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_API_BASE_URL}/health`)
-      .then(res => setStatus(res.data.status))
-      .catch(() => setStatus('Error connecting to backend'));
+    console.log('[FE1] - App mounted');
   }, []);
 
   return (
-    <div>
-      <h1>SkilledSA MVP</h1>
-      <p>Backend status: {status}</p>
-    </div>
+    <BrowserRouter>
+      <ToastContainer />
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        {/* Admin authentication routes (public) */}
+        <Route path="/admin/login" element={<Login redirectTo="/admin/dashboard" />} />
+        <Route
+          path="/admin/signup"
+          element={<Signup allowedRoles={['admin']} redirectTo="/admin/dashboard" />}
+        />
+
+        {/* Protected routes (require authentication) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/verify" element={<VerificationUpload />} />
+          <Route path="/verification-pending" element={<VerificationPending />} />
+          <Route path="/dashboard" element={<div>Dashboard (coming soon)</div>} />
+        </Route>
+
+        {/* Admin routes (require admin role) */}
+        <Route element={<ProtectedRoute allowedRoles={['admin']} redirectTo="/admin/login" />}>
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/verifications" element={<VerificationQueue />} />
+          {/* Add other admin routes as needed */}
+        </Route>
+
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
