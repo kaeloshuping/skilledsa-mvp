@@ -1,7 +1,5 @@
 import { z } from "zod";
 import dotenv from "dotenv";
-import path from "path";
-import fs from "fs";
 
 // Load environment variables from .env
 dotenv.config();
