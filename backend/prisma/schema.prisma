@@ -7,25 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// ENUMS
-// ============================================
-
-// /** User roles in the system */
 enum Role {
   customer
   contractor
   admin
 }
 
-// /** Verification status for user identities and documents */
 enum VerificationStatus {
   pending
   verified
   rejected
 }
 
-// /** Lifecycle of an escrow transaction */
 enum EscrowStatus {
   created
   held
@@ -33,50 +26,37 @@ enum EscrowStatus {
   refunded
 }
 
-// /** State machine for a job’s progress */
 enum JobStatus {
   draft
   open
   quoted
   accepted
-  milestone1_pending
-  milestone1_verified
-  milestone2_pending
+  active
   completed
-  disputed
   cancelled
 }
-
-// ============================================
-// MODELS
-// ============================================
-
-
-//  * User – core account data.
-//  * All fields follow snake_case to match PostgreSQL naming conventions.
 
 model User {
   id                      String              @id @default(uuid())
   email                   String              @unique
-  password_hash           String              // bcrypt hash, never stored in plaintext
+  password_hash           String
   role                    Role                @default(customer)
   full_name               String
   phone                   String?
   is_active               Boolean             @default(true)
   last_login              DateTime?
   verification_status     VerificationStatus  @default(pending)
-  notification_preference Json?               // JSONB, stores email/SMS/push preferences
+  notification_preference Json?
   popia_consent           Boolean             @default(false)
-  data_retention_date     DateTime?           // 90 days after account closure
+  data_retention_date     DateTime?
   created_at              DateTime            @default(now())
   updated_at              DateTime            @updatedAt
 
-  // Relations
-  jobs_as_customer        Job[]                      @relation("CustomerJobs")
-  jobs_as_contractor      Job[]                      @relation("ContractorJobs")
-  admin_logs              AdminLog[]                 @relation("AdminLogs")
-  verification_request    VerificationRequest?       @relation("userVerification")
-  reviewed_verifications  VerificationRequest[]      @relation("reviewedBy")
+  jobs_as_customer        Job[]               @relation("CustomerJobs")
+  quotes                  Quote[]
+  admin_logs              AdminLog[]          @relation("AdminLogs")
+  verification_request    VerificationRequest? @relation("userVerification")
+  reviewed_verifications  VerificationRequest[] @relation("reviewedBy")
   refresh_tokens          RefreshToken[]
   file_uploads            FileUpload[]
 
@@ -85,21 +65,17 @@ model User {
   @@index([verification_status])
 }
 
-
-//  * VerificationRequest – holds documents and admin review status.
-//  * One‑to‑one with User (a user has one request).
-
 model VerificationRequest {
   id               String            @id @default(uuid())
   user_id          String            @unique
   user             User              @relation("userVerification", fields: [user_id], references: [id])
-  role             Role              // Role being verified (customer/contractor)
-  id_photo_url     String            // S3 URL of ID document
-  selfie_url       String            // S3 URL of selfie photo
-  certificate_url  String?           // Optional, for contractors (trade certificates)
+  role             Role
+  id_photo_url     String
+  selfie_url       String
+  certificate_url  String?
   status           VerificationStatus @default(pending)
   admin_notes      String?
-  admin_id         String?           // Admin who reviewed this request
+  admin_id         String?
   admin            User?             @relation("reviewedBy", fields: [admin_id], references: [id])
   reviewed_at      DateTime?
   created_at       DateTime          @default(now())
@@ -109,14 +85,11 @@ model VerificationRequest {
   @@index([created_at])
 }
 
-
-//  * RefreshToken – stores JWT refresh tokens (hashed) for rotation.
- 
 model RefreshToken {
   id          String   @id @default(uuid())
   user_id     String
   user        User     @relation(fields: [user_id], references: [id])
-  token_hash  String   @unique        // SHA‑256 of the raw token
+  token_hash  String   @unique
   expires_at  DateTime
   revoked     Boolean  @default(false)
   created_at  DateTime @default(now())
@@ -125,41 +98,33 @@ model RefreshToken {
   @@index([expires_at])
 }
 
-
-//  * FileUpload – tracks files stored in S3 (or MinIO locally).
-//  * Used for all uploads: photos, documents, etc.
-
 model FileUpload {
   id          String   @id @default(uuid())
-  url         String   // Publicly accessible URL (presigned or CDN)
-  key         String   // S3 object key
+  url         String
+  key         String
   bucket      String
-  size        Int      // File size in bytes
+  size        Int
   mime_type   String
-  uploaded_by String   // User ID who uploaded
+  uploaded_by String
   user        User     @relation(fields: [uploaded_by], references: [id])
   created_at  DateTime @default(now())
-  expires_at  DateTime // For temporary/expiring files
+  expires_at  DateTime
 
   @@index([uploaded_by])
   @@index([expires_at])
 }
 
-
-//  * EscrowTransaction – holds payment data for a job.
-//  * One‑to‑one with Job.
-
 model EscrowTransaction {
   id                    String          @id @default(uuid())
   job_id                String          @unique
-  stripe_payment_intent_id String?      // Stripe PaymentIntent ID
-  stripe_transfer_id    String?         // Stripe transfer ID (if applicable)
-  idempotency_key       String?         @unique // Prevents duplicate Stripe calls
+  stripe_payment_intent_id String?
+  stripe_transfer_id    String?
+  idempotency_key       String?         @unique
   amount_total          Decimal?        @db.Decimal(10,2)
   amount_contractor     Decimal?        @db.Decimal(10,2)
   amount_platform       Decimal?        @db.Decimal(10,2)
   status                EscrowStatus    @default(created)
-  admin_clawback_rever  Boolean?        // Tracks admin‑initiated clawback
+  admin_clawback_rever  Boolean?
   created_at            DateTime        @default(now())
 
   job                   Job             @relation(fields: [job_id], references: [id])
@@ -167,42 +132,58 @@ model EscrowTransaction {
   @@index([job_id])
 }
 
-
-//  * Job – the core listing, with geospatial location.
-//  * location is stored as a PostGIS geography(Point,4326) – see migration SQL.
-
 model Job {
-  id                    String          @id @default(uuid())
-  customer_id           String
-  contractor_id         String?
-  status                JobStatus       @default(draft)
-  location              String?         // WKT string, e.g. "POINT(28.0473 -26.2041)"
-  travel_fee            Decimal?        @db.Decimal(10,2)
-  total_value           Decimal?        @db.Decimal(10,2)
-  created_at            DateTime        @default(now())
-  updated_at            DateTime        @updatedAt
+  id                  String           @id @default(uuid())
+  customerId          String
+  customer            User             @relation("CustomerJobs", fields: [customerId], references: [id])
+  title               String
+  description         String
+  trade               String
+  photos              String[]
+  location            Unsupported("geography(Point, 4326)")?
+  locationLat         Float?
+  locationLng         Float?
+  needsConsultation   Boolean          @default(false)
+  travelFeeAccepted   Boolean          @default(true)
+  status              JobStatus        @default(open)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
-  customer              User            @relation("CustomerJobs", fields: [customer_id], references: [id])
-  contractor            User?           @relation("ContractorJobs", fields: [contractor_id], references: [id])
-  escrow_transaction    EscrowTransaction?
+  quotes              Quote[]
+  escrow_transaction  EscrowTransaction?
 
+  @@index([customerId])
+  @@index([trade])
   @@index([status])
-  // GIST index for location is created via raw SQL in migration
 }
 
+model Quote {
+  id            String   @id @default(uuid())
+  jobId         String
+  job           Job      @relation(fields: [jobId], references: [id])
+  contractorId  String
+  contractor    User     @relation(fields: [contractorId], references: [id])
+  price         Float
+  timeline      Int
+  travelFee     Float?
+  totalPrice    Float
+  status        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-//  * AdminLog – audit trail for all admin actions.
-//  * Uses BRIN index on created_at for efficiency (see migration).
+  @@index([jobId])
+  @@index([contractorId])
+}
 
 model AdminLog {
   id                    String          @id @default(uuid())
-  request_id            String          @db.Uuid // X‑Request‑ID from middleware
+  request_id            String          @db.Uuid
   admin_id              String
-  action                String          // e.g. "APPROVE_VERIFICATION"
-  target_type           String          // e.g. "user", "verification_request"
-  target_id             String          // ID of the target entity
-  before_state          Json?           // Snapshot before change
-  after_state           Json?           // Snapshot after change
+  action                String
+  target_type           String
+  target_id             String
+  before_state          Json?
+  after_state           Json?
   ip_address            String?
   user_agent            String?
   created_at            DateTime        @default(now())
@@ -210,5 +191,4 @@ model AdminLog {
   admin                 User            @relation("AdminLogs", fields: [admin_id], references: [id])
 
   @@index([admin_id])
-  // BRIN index on created_at is added via raw SQL migration
 }
