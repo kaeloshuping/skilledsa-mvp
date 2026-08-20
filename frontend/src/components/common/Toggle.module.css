@@ -1,0 +1,59 @@
+/* src/components/common/Toggle.module.css */
+.toggleContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.switch {
+  width: 52px;
+  height: 32px;
+  border-radius: 32px;
+  background: var(--color-border);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+
+.switch.active {
+  background: var(--color-primary);
+}
+
+.switch.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.knob {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  transition: transform 0.25s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.switch.active .knob {
+  transform: translateX(20px);
+}
+
+.label {
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.helper {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-left: 64px; /* align with label */
+}

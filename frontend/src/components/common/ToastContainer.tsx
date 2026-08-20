@@ -6,6 +6,10 @@ import styles from './ToastContainer.module.css';
 export const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useToastStore();
 
+  if (toasts.length === 0) {
+    return null;
+  }
+
   return (
     <div className={styles.container}>
       {toasts.map((toast) => (
@@ -13,9 +17,17 @@ export const ToastContainer: React.FC = () => {
           key={toast.id}
           className={`${styles.toast} ${styles[toast.type]}`}
           onClick={() => removeToast(toast.id)}
+          role="alert"
         >
           <span className={styles.message}>{toast.message}</span>
-          <button className={styles.close} onClick={() => removeToast(toast.id)}>
+          <button
+            className={styles.close}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeToast(toast.id);
+            }}
+            aria-label="Close notification"
+          >
             &times;
           </button>
         </div>
