@@ -1,13 +1,8 @@
 import { z } from "zod";
 import dotenv from "dotenv";
 
-// Load environment variables from .env
 dotenv.config();
 
-/**
- * Zod schema for validating all required environment variables.
- * Explicitly typed and parsed to ensure runtime correctness.
- */
 const envSchema = z.object({
   // App
   NODE_ENV: z
@@ -22,16 +17,19 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
 
-  // JWT (RS256) – paths to PEM files
-  JWT_PRIVATE_KEY_PATH: z.string().min(1, "JWT private key path is required"),
-  JWT_PUBLIC_KEY_PATH: z.string().min(1, "JWT public key path is required"),
+  // JWT (RS256) – private/public keys
+  JWT_PRIVATE_KEY: z.string().min(1, "JWT private key is required"),
+  JWT_PUBLIC_KEY: z.string().min(1, "JWT public key is required"),
 
   // AWS S3
   AWS_REGION: z.string().default("af-south-1"),
   AWS_ACCESS_KEY_ID: z.string().min(1),
   AWS_SECRET_ACCESS_KEY: z.string().min(1),
   S3_BUCKET_NAME: z.string().min(1),
-  S3_PRESIGNED_URL_EXPIRY: z.coerce.number().default(60), // seconds
+  S3_PRESIGNED_URL_EXPIRY: z.coerce.number().default(60),
+
+  // Google Maps
+  GOOGLE_MAPS_API_KEY: z.string().min(1, "Google Maps API key is required"),
 
   // Email (SendGrid)
   SENDGRID_API_KEY: z.string().min(1),
@@ -47,14 +45,13 @@ const envSchema = z.object({
   LOG_FILE_PATH: z.string().optional(),
 
   // Rate limiting
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000), // 15 min
-  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(5), // for login
-  RATE_LIMIT_GENERAL_WINDOW_MS: z.coerce.number().default(60000), // 1 min
-  RATE_LIMIT_GENERAL_MAX: z.coerce.number().default(100), // requests per minute
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
+  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(5),
+  RATE_LIMIT_GENERAL_WINDOW_MS: z.coerce.number().default(60000),
+  RATE_LIMIT_GENERAL_MAX: z.coerce.number().default(100),
 
   // Feature flags
   FEATURE_REFERRALS: z.coerce.boolean().default(false),
 });
 
-// Parse and export the validated environment
 export const env = envSchema.parse(process.env);

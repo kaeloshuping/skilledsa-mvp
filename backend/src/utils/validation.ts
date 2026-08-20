@@ -48,3 +48,36 @@ export const verificationSubmitSchema = z.object({
 export const verificationReviewSchema = z.object({
   notes: z.string().optional(),
 });
+
+// ... (existing schemas)
+
+/**
+ * Schema for creating a job.
+ */
+export const createJobSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  trade: z.string().min(1, "Trade is required"),
+  photos: z.array(z.string().url()).optional().default([]),
+  locationLat: z.number().min(-90).max(90, "Latitude must be between -90 and 90"),
+  locationLng: z.number().min(-180).max(180, "Longitude must be between -180 and 180"),
+  needsConsultation: z.boolean().default(false),
+  travelFeeAccepted: z.boolean().default(true),
+});
+
+/**
+ * Schema for updating a job (all fields optional).
+ */
+export const updateJobSchema = createJobSchema.partial();
+
+/**
+ * Schema for listing jobs with query filters.
+ */
+export const listJobsQuerySchema = z.object({
+  trade: z.string().optional(),
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lng: z.coerce.number().min(-180).max(180).optional(),
+  radius: z.coerce.number().positive().default(35), // km
+  travelFeeAccepted: z.coerce.boolean().optional(),
+  status: z.enum(['draft', 'open', 'quoted', 'accepted', 'active', 'completed', 'cancelled']).optional().default('open'),
+});
