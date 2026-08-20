@@ -21,7 +21,7 @@ export class AuthService {
     email: string;
     password: string;
     full_name: string;
-    role: 'customer' | 'contractor' | 'admin';
+    role: 'customer' | 'contractor';
     phone?: string;
     popia_consent: boolean;
   }): Promise<Omit<User, 'password_hash'>> {

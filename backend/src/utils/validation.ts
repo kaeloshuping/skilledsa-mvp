@@ -15,7 +15,7 @@ export const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: passwordSchema,
   full_name: z.string().min(1, 'Full name is required'),
-  role: z.enum(['customer', 'contractor', 'admin']),
+  role: z.enum(['customer', 'contractor']),
   phone: z.string().optional(),
   popia_consent: z.boolean().refine(val => val === true, {
     message: 'You must consent to POPIA',
