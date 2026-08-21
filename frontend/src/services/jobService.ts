@@ -4,6 +4,10 @@ import { getLogger } from '../utils/logger';
 
 const log = getLogger('jobService');
 
+// ============================================================
+// Types
+// ============================================================
+
 export interface JobPhotoUpload {
   file: File;
   url: string; // presigned URL
@@ -24,7 +28,7 @@ export interface CreateJobData {
 }
 
 /**
- * Minimal Job response interface – extend as backend matures.
+ * Full Job response interface – extend as backend matures.
  */
 export interface Job {
   id: string;
@@ -43,6 +47,31 @@ export interface Job {
   created_at: string;
   updated_at: string;
 }
+
+/**
+ * Job statistics for the customer dashboard.
+ */
+export interface JobStats {
+  posted: number;
+  active: number;
+  completed: number;
+}
+
+/**
+ * Summary of a job for listing in the dashboard or browse view.
+ */
+export interface JobSummary {
+  id: string;
+  title: string;
+  trade: string;
+  status: 'open' | 'active' | 'completed' | 'cancelled' | 'disputed';
+  quoteCount: number;
+  createdAt: string;
+}
+
+// ============================================================
+// Service Class
+// ============================================================
 
 export class JobService {
   /**
@@ -97,6 +126,27 @@ export class JobService {
   static async createJob(data: CreateJobData): Promise<Job> {
     log.info('Creating job', data);
     const response = await apiClient.post<Job>('/jobs', data);
+    return response.data;
+  }
+
+  /**
+   * Fetch jobs for a specific customer.
+   * Optionally limit the number of results.
+   */
+  static async getJobs(customerId: string, limit?: number): Promise<JobSummary[]> {
+    log.info('Fetching jobs for customer', { customerId, limit });
+    const params = new URLSearchParams({ customerId });
+    if (limit) params.append('limit', String(limit));
+    const response = await apiClient.get<JobSummary[]>(`/jobs?${params.toString()}`);
+    return response.data;
+  }
+
+  /**
+   * Fetch job statistics for a customer.
+   */
+  static async getJobStats(customerId: string): Promise<JobStats> {
+    log.info('Fetching job stats for customer', { customerId });
+    const response = await apiClient.get<JobStats>(`/jobs/stats?customerId=${customerId}`);
     return response.data;
   }
 }

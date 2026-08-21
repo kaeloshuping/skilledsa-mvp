@@ -1,0 +1,240 @@
+/* src/pages/customer/CustomerDashboard.module.css */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg) var(--spacing-md);
+  background: var(--color-background);
+  min-height: 100vh;
+}
+
+.loading {
+  text-align: center;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  padding: var(--spacing-xl) 0;
+}
+
+.error {
+  background: rgba(192, 57, 43, 0.1);
+  color: var(--color-secondary-error);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+/* Verification Banner */
+.verificationBanner {
+  background: var(--color-secondary-warning);
+  color: white;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.verificationBanner span {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.verifyButton {
+  background: white;
+  color: var(--color-secondary-warning);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.verifyButton:hover {
+  opacity: 0.9;
+}
+
+.verifiedBadge {
+  background: var(--color-secondary-success);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  margin-bottom: var(--spacing-lg);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Stats Cards */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.statCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--color-border);
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.statNumber {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 32px;
+  color: var(--color-primary);
+}
+
+.statLabel {
+  display: block;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.statHint {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+  margin-top: var(--spacing-xs);
+}
+
+/* Quick Actions */
+.quickActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.primaryButton {
+  height: 48px;
+  padding: 0 var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
+.primaryButton:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.secondaryButton {
+  height: 48px;
+  padding: 0 var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
+.secondaryButton:hover {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+/* Recent Jobs */
+.recentJobs {
+  margin-top: var(--spacing-xl);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.sectionHeader h2 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.viewAllButton {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.viewAllButton:hover {
+  opacity: 0.8;
+}
+
+.jobList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.emptyIcon {
+  font-size: 64px;
+  margin-bottom: var(--spacing-md);
+}
+
+.emptyState p {
+  font-size: 18px;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.emptySubtext {
+  color: var(--color-text-secondary) !important;
+  font-size: 14px !important;
+  margin: var(--spacing-xs) 0 var(--spacing-lg) !important;
+}
+
+.emptyState .primaryButton {
+  margin-top: var(--spacing-md);
+}
