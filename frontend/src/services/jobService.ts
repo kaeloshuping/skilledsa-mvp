@@ -5,7 +5,7 @@ import { getLogger } from '../utils/logger';
 const log = getLogger('jobService');
 
 // ============================================================
-// Types
+// Existing Types (customer job creation)
 // ============================================================
 
 export interface JobPhotoUpload {
@@ -28,7 +28,7 @@ export interface CreateJobData {
 }
 
 /**
- * Full Job response interface – extend as backend matures.
+ * Full Job response interface for customer (may not include distance/rating).
  */
 export interface Job {
   id: string;
@@ -48,18 +48,12 @@ export interface Job {
   updated_at: string;
 }
 
-/**
- * Job statistics for the customer dashboard.
- */
 export interface JobStats {
   posted: number;
   active: number;
   completed: number;
 }
 
-/**
- * Summary of a job for listing in the dashboard or browse view.
- */
 export interface JobSummary {
   id: string;
   title: string;
@@ -70,13 +64,57 @@ export interface JobSummary {
 }
 
 // ============================================================
-// Service Class
+// NEW Types for Contractor Browsing
+// ============================================================
+
+export interface ContractorJob {
+  id: string;
+  title: string;
+  description: string;
+  trade: string;
+  location: {
+    lat: number;
+    lng: number;
+    address?: string;
+  };
+  distance?: number; // in km (calculated by backend)
+  travelFeeAccepted: boolean;
+  status: 'draft' | 'open' | 'quoted' | 'accepted' | 'milestone1_pending' | 'milestone1_verified' | 'milestone2_pending' | 'completed' | 'disputed';
+  photos: string[];
+  customer: {
+    id: string;
+    full_name: string;
+    rating?: number; // average rating
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FetchAvailableJobsParams {
+  trade?: string;
+  search?: string;
+  lat?: number;
+  lng?: number;
+  radius?: number; // in km, default 35
+  page?: number;
+  limit?: number;
+}
+
+export interface AvailableJobsResponse {
+  data: ContractorJob[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ============================================================
+// Service Class (existing + new methods)
 // ============================================================
 
 export class JobService {
-  /**
-   * Get a presigned URL for uploading a job photo.
-   */
+  // --- Existing methods (unchanged) ---
+
   static async getPresignedUrl(fileName: string, contentType: string): Promise<{ url: string; key: string }> {
     log.info('Getting presigned URL for job photo', { fileName });
     const response = await apiClient.post<{ url: string; key: string }>('/verification/presigned-url', {
@@ -86,10 +124,6 @@ export class JobService {
     return response.data;
   }
 
-  /**
-   * Upload a file to S3 using a presigned URL.
-   * Returns a promise that resolves when the upload is complete.
-   */
   static async uploadFileToS3(url: string, file: File, onProgress?: (progress: number) => void): Promise<void> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -119,20 +153,12 @@ export class JobService {
     });
   }
 
-  /**
-   * Create a new job.
-   * Returns the created job object.
-   */
   static async createJob(data: CreateJobData): Promise<Job> {
     log.info('Creating job', data);
     const response = await apiClient.post<Job>('/jobs', data);
     return response.data;
   }
 
-  /**
-   * Fetch jobs for a specific customer.
-   * Optionally limit the number of results.
-   */
   static async getJobs(customerId: string, limit?: number): Promise<JobSummary[]> {
     log.info('Fetching jobs for customer', { customerId, limit });
     const params = new URLSearchParams({ customerId });
@@ -141,12 +167,31 @@ export class JobService {
     return response.data;
   }
 
-  /**
-   * Fetch job statistics for a customer.
-   */
   static async getJobStats(customerId: string): Promise<JobStats> {
     log.info('Fetching job stats for customer', { customerId });
     const response = await apiClient.get<JobStats>(`/jobs/stats?customerId=${customerId}`);
     return response.data;
+  }
+
+  // --- NEW methods for contractor browsing ---
+
+  /**
+   * Fetch available jobs for contractors with filters and geolocation.
+   */
+  static async getAvailableJobs(params: FetchAvailableJobsParams): Promise<AvailableJobsResponse> {
+    log.info('Fetching available jobs', params);
+    const response = await apiClient.get<AvailableJobsResponse>('/jobs/available', { params });
+    console.log('[FE2] - Fetched available jobs:', response.data.total);
+    return response.data;
+  }
+
+  /**
+   * Fetch a single job by ID (for contractor detail view).
+   */
+  static async getJobById(id: string): Promise<ContractorJob> {
+    log.info('Fetching job by ID', { id });
+    const response = await apiClient.get<{ data: ContractorJob }>(`/jobs/${id}`);
+    console.log('[FE2] - Fetched job detail:', response.data.data.id);
+    return response.data.data;
   }
 }

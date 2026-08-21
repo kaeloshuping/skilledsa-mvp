@@ -1,0 +1,161 @@
+/* src/pages/contractor/JobDetail.module.css */
+.container {
+  padding: var(--spacing-lg);
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--color-background);
+  min-height: 100vh;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-weight: 500;
+  cursor: pointer;
+  padding: var(--spacing-sm) 0;
+  margin-bottom: var(--spacing-md);
+  font-size: 16px;
+}
+
+.backButton:hover {
+  text-decoration: underline;
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 28px;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.badge {
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.badgeOpen {
+  background: var(--color-secondary-success);
+  color: white;
+}
+.badgeAccepted {
+  background: var(--color-primary);
+  color: white;
+}
+.badgeCompleted {
+  background: var(--color-secondary-success);
+  color: white;
+}
+.badgeDisputed {
+  background: var(--color-secondary-error);
+  color: white;
+}
+.badgeDefault {
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-size: 16px;
+}
+
+.trade {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.rating {
+  color: var(--color-secondary-warning);
+  font-weight: 500;
+}
+
+.description h3, .photos h3, .location h3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 18px;
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--color-text-primary);
+}
+
+.description p {
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.photo {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.location p {
+  margin: var(--spacing-xs) 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.quoteButton {
+  padding: 12px 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.quoteButton:hover {
+  opacity: 0.85;
+}
+
+.loading, .empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-size: 18px;
+}
