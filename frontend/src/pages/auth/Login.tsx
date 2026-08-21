@@ -8,19 +8,19 @@ import { getLogger } from '../../utils/logger';
 const log = getLogger('Login');
 
 interface LoginProps {
-  redirectTo?: string; // Where to redirect after successful login
+  redirectTo?: string; // Where to redirect after successful login (overridden by location.state.from)
 }
 
 export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, isLoading, error, clearError, user } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // If redirectTo is not provided, use the 'from' location state or default to '/'
+  // Determine the destination: use location.state.from if available, else fallback to redirectTo
   const from = (location.state as { from?: string })?.from || redirectTo;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,17 +37,31 @@ export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
 
     try {
       await login({ email, password });
-      // Redirect to the intended destination
-      navigate(from, { replace: true });
-      log.info('Login successful, redirecting to', from);
+
+      // After login, determine the final destination
+      let destination = from;
+
+      // If no explicit destination (from state or redirectTo) and we have a user,
+      // redirect based on role (for /login page with no specific target)
+      if ((!from || from === '/') && user) {
+        if (user.role === 'admin') {
+          destination = '/admin/dashboard';
+        } else if (user.role === 'customer' || user.role === 'contractor') {
+          destination = '/dashboard';
+        } else {
+          destination = '/';
+        }
+      }
+
+      navigate(destination, { replace: true });
+      log.info('Login successful, redirecting to', destination);
     } catch (err) {
       console.error('[FE1] - Login error', err);
     }
   };
 
-  // ... rest of the component unchanged (the render)
-  // Just ensure the footer link to signup points to the appropriate signup page.
-  // We can conditionally change the signup link based on the current route.
+  // ... rest of the component (JSX) unchanged ...
+  // Ensure the signup link is dynamic based on path
   const signupPath = location.pathname.startsWith('/admin') ? '/admin/signup' : '/signup';
 
   return (
@@ -59,7 +73,6 @@ export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
         </p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* ... fields unchanged ... */}
           <div className={styles.field}>
             <label htmlFor="email">Email</label>
             <input

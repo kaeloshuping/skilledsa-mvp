@@ -8,18 +8,48 @@ import {
 } from '../utils/validation.js';
 import { ZodError } from 'zod';
 import { RequestWithId } from '../middleware/requestTracing.js';
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  hashRefreshToken,
+} from '../utils/jwt.js';
+import prisma from '../config/database.js';
 
 export class AuthController {
   /**
    * POST /api/v1/auth/signup
+   * Generates and returns tokens on successful signup.
    */
   static async signup(req: Request, res: Response): Promise<void> {
     const log = getLogger((req as RequestWithId).requestId);
     try {
       const data = signupSchema.parse(req.body);
       const user = await AuthService.register(data);
-      log.info('[BE1] - Signup successful', { userId: user.id });
-      res.status(201).json({ user });
+
+      // Generate JWT tokens for the newly registered user
+      const payload = {
+        user_id: user.id,
+        email: user.email,
+        role: user.role,
+        verification_status: user.verification_status,
+      };
+      const accessToken = generateAccessToken(payload);
+      const refreshToken = generateRefreshToken(payload);
+
+      // Store the refresh token in the database
+      const tokenHash = hashRefreshToken(refreshToken);
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await prisma.refreshToken.create({
+        data: {
+          user_id: user.id,
+          token_hash: tokenHash,
+          expires_at: expiresAt,
+          revoked: false,
+        },
+      });
+
+      log.info('[BE1] - Signup successful with tokens', { userId: user.id });
+      res.status(201).json({ user, accessToken, refreshToken });
     } catch (error) {
       if (error instanceof ZodError) {
         res.status(400).json({ error: 'Validation error', details: error.errors });

@@ -91,8 +91,10 @@
 }
 
 .helperError {
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: var(--color-secondary-error);
+  color: #C0392B;
+  margin-top: 4px;
 }
 
 .errorMessage {

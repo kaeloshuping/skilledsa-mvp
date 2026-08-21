@@ -10,13 +10,13 @@ import { getLogger } from '../../utils/logger';
 const log = getLogger('Signup');
 
 interface SignupProps {
-  allowedRoles?: Role[]; // restrict which roles are shown
-  redirectTo?: string;   // where to redirect after signup
+  allowedRoles?: Role[];
+  redirectTo?: string;
 }
 
 export const Signup: React.FC<SignupProps> = ({
-  allowedRoles = ['customer', 'contractor'], // default for public signup
-  redirectTo = '/verify',                    // default for customers/contractors
+  allowedRoles = ['customer', 'contractor'],
+  redirectTo = '/verify',
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,6 +24,7 @@ export const Signup: React.FC<SignupProps> = ({
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<Role | null>(null);
@@ -48,7 +49,7 @@ export const Signup: React.FC<SignupProps> = ({
     clearError();
     setLocalError(null);
 
-    // Validation
+    // Basic field validation
     if (!email || !password || !fullName || !role) {
       setLocalError('All fields are required');
       return;
@@ -58,11 +59,19 @@ export const Signup: React.FC<SignupProps> = ({
       return;
     }
 
+    // Password strength validation
     const passwordErrors = getPasswordErrors(password);
     if (passwordErrors.length > 0) {
       setLocalError(`Password must contain: ${passwordErrors.join(', ')}`);
       return;
     }
+
+    // --- START: Password confirmation validation ---
+    if (password !== confirmPassword) {
+      setLocalError('Passwords do not match');
+      return;
+    }
+    // --- END ---
 
     console.log('[FE1] - Signup submitted', { email, role, fullName });
 
@@ -75,7 +84,6 @@ export const Signup: React.FC<SignupProps> = ({
         phone: phone || undefined,
         popia_consent: popiaConsent,
       });
-      // Redirect to the specified path
       navigate(redirectTo);
       log.info('Signup successful, redirecting to', redirectTo);
     } catch (err) {
@@ -83,7 +91,6 @@ export const Signup: React.FC<SignupProps> = ({
     }
   };
 
-  // Determine login link based on current route
   const loginPath = location.pathname.startsWith('/admin') ? '/admin/login' : '/login';
 
   return (
@@ -95,7 +102,6 @@ export const Signup: React.FC<SignupProps> = ({
         </p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* ... fields unchanged ... */}
           <div className={styles.field}>
             <label htmlFor="fullName">Full Name</label>
             <input
@@ -147,6 +153,24 @@ export const Signup: React.FC<SignupProps> = ({
               </div>
             )}
           </div>
+
+          {/* --- START: Confirm Password Field --- */}
+          <div className={styles.field}>
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter your password"
+              required
+              disabled={isLoading}
+            />
+            {confirmPassword.length > 0 && password !== confirmPassword && (
+              <p className={styles.helperError}>Passwords do not match</p>
+            )}
+          </div>
+          {/* --- END --- */}
 
           <div className={styles.field}>
             <label htmlFor="phone">Phone (optional)</label>
