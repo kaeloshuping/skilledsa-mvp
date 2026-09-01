@@ -56,8 +56,6 @@ export const CustomerDashboard: React.FC = () => {
   }, [user, showToast]);
 
   const handleStatClick = (status: 'open' | 'active' | 'completed') => {
-    // For now, navigate to a placeholder job list filtered by status.
-    // In the future, this could go to /jobs?status=...
     navigate(`/dashboard?filter=${status}`);
   };
 
@@ -121,10 +119,18 @@ export const CustomerDashboard: React.FC = () => {
 
       {/* Quick Actions */}
       <div className={styles.quickActions}>
-        <button className={styles.primaryButton} onClick={() => navigate('/post-job')}>
+        <button
+          className={styles.primaryButton}
+          onClick={() => navigate('/post-job')}
+          disabled={!isVerified}
+          title={!isVerified ? 'You must verify your account to post a job' : ''}
+        >
           ➕ Post a Job
         </button>
-        <button className={styles.secondaryButton} onClick={() => navigate('/contractors')}>
+        <button
+          className={styles.secondaryButton}
+          onClick={() => navigate('/contractors')}
+        >
           🔍 Browse Contractors
         </button>
       </div>
@@ -148,6 +154,8 @@ export const CustomerDashboard: React.FC = () => {
             <button
               className={styles.primaryButton}
               onClick={() => navigate('/post-job')}
+              disabled={!isVerified}
+              title={!isVerified ? 'You must verify your account to post a job' : ''}
             >
               Post a Job
             </button>

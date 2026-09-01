@@ -16,7 +16,7 @@ interface SignupProps {
 
 export const Signup: React.FC<SignupProps> = ({
   allowedRoles = ['customer', 'contractor'],
-  redirectTo = '/verify',
+  redirectTo = '/dashboard', // Changed from '/verify' to '/dashboard'
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,7 +24,6 @@ export const Signup: React.FC<SignupProps> = ({
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<Role | null>(null);
@@ -49,7 +48,6 @@ export const Signup: React.FC<SignupProps> = ({
     clearError();
     setLocalError(null);
 
-    // Basic field validation
     if (!email || !password || !fullName || !role) {
       setLocalError('All fields are required');
       return;
@@ -59,19 +57,11 @@ export const Signup: React.FC<SignupProps> = ({
       return;
     }
 
-    // Password strength validation
     const passwordErrors = getPasswordErrors(password);
     if (passwordErrors.length > 0) {
       setLocalError(`Password must contain: ${passwordErrors.join(', ')}`);
       return;
     }
-
-    // --- START: Password confirmation validation ---
-    if (password !== confirmPassword) {
-      setLocalError('Passwords do not match');
-      return;
-    }
-    // --- END ---
 
     console.log('[FE1] - Signup submitted', { email, role, fullName });
 
@@ -84,6 +74,7 @@ export const Signup: React.FC<SignupProps> = ({
         phone: phone || undefined,
         popia_consent: popiaConsent,
       });
+      // Redirect to dashboard (the dashboard will show the verification banner)
       navigate(redirectTo);
       log.info('Signup successful, redirecting to', redirectTo);
     } catch (err) {
@@ -153,24 +144,6 @@ export const Signup: React.FC<SignupProps> = ({
               </div>
             )}
           </div>
-
-          {/* --- START: Confirm Password Field --- */}
-          <div className={styles.field}>
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter your password"
-              required
-              disabled={isLoading}
-            />
-            {confirmPassword.length > 0 && password !== confirmPassword && (
-              <p className={styles.helperError}>Passwords do not match</p>
-            )}
-          </div>
-          {/* --- END --- */}
 
           <div className={styles.field}>
             <label htmlFor="phone">Phone (optional)</label>
