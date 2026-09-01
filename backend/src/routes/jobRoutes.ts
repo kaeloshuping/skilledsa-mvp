@@ -5,9 +5,11 @@ import { generalLimiter } from '../middleware/rateLimit.js';
 
 const router = Router();
 
-// Apply rate limiting and authentication to all job routes
 router.use(generalLimiter);
 router.use(authenticate);
+
+// Specific routes must come BEFORE the dynamic :id route
+router.get('/stats', JobController.getJobStats);
 
 router.post('/', JobController.createJob);
 router.get('/', JobController.listJobs);

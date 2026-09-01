@@ -58,8 +58,12 @@ function App() {
         {/* ============================================================
             CUSTOMER-ONLY ROUTES
             ============================================================ */}
-        <Route element={<ProtectedRoute allowedRoles={['customer']} requireVerification />}>
+        {/* --- FIX: Removed requireVerification from dashboard --- */}
+        <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
           <Route path="/dashboard" element={<CustomerDashboard />} />
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={['customer']} requireVerification />}>
           <Route path="/post-job" element={<PostJob />} />
         </Route>
 

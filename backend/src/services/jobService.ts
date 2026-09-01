@@ -3,9 +3,6 @@ import { Prisma, JobStatus } from '@prisma/client';
 import { getLogger } from '../utils/logger.js';
 
 export class JobService {
-  /**
-   * Create a new job.
-   */
   static async createJob(data: {
     customerId: string;
     title: string;
@@ -19,8 +16,6 @@ export class JobService {
   }) {
     const log = getLogger();
     const { customerId, locationLat, locationLng, ...rest } = data;
-
-    // Build geography point WKT: "POINT(lng lat)"
     const locationWkt = `POINT(${locationLng} ${locationLat})`;
 
     const job = await prisma.job.create({
@@ -31,54 +26,34 @@ export class JobService {
         locationLng,
         location: Prisma.sql`ST_GeomFromText(${locationWkt}, 4326)::geography`,
         status: 'open',
+        photos: JSON.stringify(data.photos || []),
       },
     });
-
     log.info('[BE1] - Job created', { jobId: job.id, customerId });
     return job;
   }
 
-  /**
-   * List jobs with filters.
-   * - If lat/lng provided, filter by radius (default 35km) using PostGIS.
-   * - If travelFeeAccepted is false, only show jobs within 35km (override radius).
-   * - Additional filters: trade, status.
-   */
   static async listJobs(filters: {
+    customerId?: string;
     trade?: string;
     lat?: number;
     lng?: number;
-    radius?: number; // in km
+    radius?: number;
     travelFeeAccepted?: boolean;
     status?: JobStatus;
   }) {
     const log = getLogger();
-    const { trade, lat, lng, radius = 35, travelFeeAccepted, status = 'open' } = filters;
+    const { customerId, trade, lat, lng, radius = 35, travelFeeAccepted, status = 'open' } = filters;
 
-    // Build the base where clause using Prisma's type-safe approach
-    const where: Prisma.JobWhereInput = {
-      status,
-    };
+    const where: Prisma.JobWhereInput = { status };
+    if (customerId) where.customer_id = customerId;
+    if (trade) where.trade = trade;
+    if (travelFeeAccepted !== undefined) where.travelFeeAccepted = travelFeeAccepted;
 
-    if (trade) {
-      where.trade = trade;
-    }
-
-    if (travelFeeAccepted !== undefined) {
-      where.travelFeeAccepted = travelFeeAccepted;
-    }
-
-    // For location filtering, we need to use a raw SQL approach because
-    // Prisma doesn't support geography columns in the standard where clause.
-    // We'll use $queryRaw to get job IDs filtered by location, then use
-    // those IDs in the standard findMany.
     let filteredIds: string[] | null = null;
 
     if (lat !== undefined && lng !== undefined) {
-      // If travelFeeAccepted is false, force radius to 35km (or less)
       const effectiveRadius = travelFeeAccepted === false ? Math.min(radius, 35) : radius;
-
-      // Use raw SQL with ST_DWithin for location filtering
       const result = await prisma.$queryRaw<{ id: string }[]>`
         SELECT id FROM "Job"
         WHERE ST_DWithin(
@@ -89,27 +64,18 @@ export class JobService {
         AND status = ${status}::"JobStatus"
         ${trade ? Prisma.sql`AND trade = ${trade}` : Prisma.empty}
         ${travelFeeAccepted !== undefined ? Prisma.sql`AND "travelFeeAccepted" = ${travelFeeAccepted}` : Prisma.empty}
+        ${customerId ? Prisma.sql`AND "customer_id" = ${customerId}` : Prisma.empty}
       `;
-
       filteredIds = result.map(row => row.id);
-
-      // If no jobs found within radius, return empty array early
-      if (filteredIds.length === 0) {
-        return [];
-      }
+      if (filteredIds.length === 0) return [];
     }
 
-    // Build the final where clause with ID filtering if location was used
     const finalWhere: Prisma.JobWhereInput = { ...where };
+    if (filteredIds !== null) finalWhere.id = { in: filteredIds };
 
-    if (filteredIds !== null) {
-      finalWhere.id = { in: filteredIds };
-    }
-
-    // Fetch jobs with their relations
     const jobs = await prisma.job.findMany({
       where: finalWhere,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       include: {
         customer: {
           select: {
@@ -120,23 +86,12 @@ export class JobService {
             verification_status: true,
           },
         },
-        quotes: {
-          select: {
-            id: true,
-            price: true,
-            contractorId: true,
-          },
-        },
       },
     });
-
     log.debug('[BE1] - Jobs listed', { count: jobs.length, filters });
     return jobs;
   }
 
-  /**
-   * Get a single job by ID with customer details and quotes.
-   */
   static async getJobById(id: string) {
     const job = await prisma.job.findUnique({
       where: { id },
@@ -150,27 +105,45 @@ export class JobService {
             verification_status: true,
           },
         },
-        quotes: {
-          include: {
-            contractor: {
-              select: {
-                id: true,
-                full_name: true,
-                verification_status: true,
-              },
-            },
+        contractor: {
+          select: {
+            id: true,
+            full_name: true,
+            verification_status: true,
           },
         },
+        escrow_transaction: true,
       },
     });
     return job;
   }
 
-  /**
-   * Update a job (customer only).
-   * Handles location update separately because Prisma doesn't support
-   * geography columns in the standard update input.
-   */
+  static async getJobStats(customerId: string) {
+    const log = getLogger();
+    log.info('[BE1] - Fetching job stats', { customerId });
+
+    const totalPosted = await prisma.job.count({
+      where: { customer_id: customerId },
+    });
+
+    const activeStatuses: JobStatus[] = ['open', 'quoted', 'accepted', 'milestone1_pending', 'milestone1_verified', 'milestone2_pending'];
+    const activeCount = await prisma.job.count({
+      where: {
+        customer_id: customerId,
+        status: { in: activeStatuses },
+      },
+    });
+
+    const completedCount = await prisma.job.count({
+      where: {
+        customer_id: customerId,
+        status: 'completed',
+      },
+    });
+
+    return { posted: totalPosted, active: activeCount, completed: completedCount };
+  }
+
   static async updateJob(
     id: string,
     customerId: string,
@@ -187,33 +160,17 @@ export class JobService {
     }>
   ) {
     const log = getLogger();
-    // Check ownership
     const existing = await prisma.job.findUnique({ where: { id } });
-    if (!existing) {
-      throw new Error('Job not found');
-    }
-    if (existing.customerId !== customerId) {
-      throw new Error('You are not authorized to update this job');
-    }
+    if (!existing) throw new Error('Job not found');
+    if (existing.customerId !== customerId) throw new Error('Not authorized');
 
-    // Separate regular fields from location (which must be updated via raw SQL)
     const { locationLat, locationLng, ...restData } = data;
-
-    // Update regular fields using Prisma's standard update
     const updateData: Prisma.JobUpdateInput = { ...restData };
-    if (locationLat !== undefined) {
-      updateData.locationLat = locationLat;
-    }
-    if (locationLng !== undefined) {
-      updateData.locationLng = locationLng;
-    }
+    if (locationLat !== undefined) updateData.locationLat = locationLat;
+    if (locationLng !== undefined) updateData.locationLng = locationLng;
 
-    const job = await prisma.job.update({
-      where: { id },
-      data: updateData,
-    });
+    const job = await prisma.job.update({ where: { id }, data: updateData });
 
-    // If location coordinates are provided, update the geography column separately
     if (locationLat !== undefined && locationLng !== undefined) {
       const locationWkt = `POINT(${locationLng} ${locationLat})`;
       await prisma.$executeRaw`
@@ -222,51 +179,22 @@ export class JobService {
         WHERE id = ${id}
       `;
     }
-
     log.info('[BE1] - Job updated', { jobId: id, customerId });
-    // Fetch the updated job with relations
-    const updatedJob = await prisma.job.findUnique({
-      where: { id },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            full_name: true,
-            email: true,
-            phone: true,
-            verification_status: true,
-          },
-        },
-        quotes: true,
-      },
-    });
-    return updatedJob;
+    return this.getJobById(id);
   }
 
-  /**
-   * Delete a job (customer only).
-   */
   static async deleteJob(id: string, customerId: string) {
     const log = getLogger();
     const existing = await prisma.job.findUnique({ where: { id } });
-    if (!existing) {
-      throw new Error('Job not found');
-    }
-    if (existing.customerId !== customerId) {
-      throw new Error('You are not authorized to delete this job');
-    }
-
+    if (!existing) throw new Error('Job not found');
+    if (existing.customerId !== customerId) throw new Error('Not authorized');
     await prisma.job.delete({ where: { id } });
     log.info('[BE1] - Job deleted', { jobId: id, customerId });
   }
 
-  /**
-   * Notify contractors about a new job (placeholder).
-   * For now, just log the event.
-   */
   static async notifyContractors(jobId: string) {
     const log = getLogger();
     log.info('[BE1] - New job notification for contractors', { jobId });
-    // In future: fetch eligible contractors (trade, location) and send push/email.
+    // Placeholder
   }
 }

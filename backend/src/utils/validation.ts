@@ -49,35 +49,58 @@ export const verificationReviewSchema = z.object({
   notes: z.string().optional(),
 });
 
-// ... (existing schemas)
+// ============================================================
+// JOB SCHEMAS (updated with new fields and correct status)
+// ============================================================
 
 /**
  * Schema for creating a job.
+ * All fields are required for creation.
  */
 export const createJobSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  trade: z.string().min(1, "Trade is required"),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  trade: z.string().min(1, 'Trade is required'),
   photos: z.array(z.string().url()).optional().default([]),
-  locationLat: z.number().min(-90).max(90, "Latitude must be between -90 and 90"),
-  locationLng: z.number().min(-180).max(180, "Longitude must be between -180 and 180"),
+  locationLat: z.number().min(-90).max(90, 'Latitude must be between -90 and 90'),
+  locationLng: z.number().min(-180).max(180, 'Longitude must be between -180 and 180'),
   needsConsultation: z.boolean().default(false),
   travelFeeAccepted: z.boolean().default(true),
 });
 
 /**
- * Schema for updating a job (all fields optional).
+ * Schema for updating a job.
+ * All fields are optional for updates.
  */
 export const updateJobSchema = createJobSchema.partial();
 
 /**
+ * Valid JobStatus values as defined in the Prisma schema.
+ * Used for filtering lists.
+ */
+const jobStatusEnum = z.enum([
+  'draft',
+  'open',
+  'quoted',
+  'accepted',
+  'milestone1_pending',
+  'milestone1_verified',
+  'milestone2_pending',
+  'completed',
+  'disputed',
+  'cancelled',
+]);
+
+/**
  * Schema for listing jobs with query filters.
+ * All fields are optional.
+ * `status` defaults to 'open' if not provided.
  */
 export const listJobsQuerySchema = z.object({
   trade: z.string().optional(),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
-  radius: z.coerce.number().positive().default(35), // km
+  radius: z.coerce.number().positive().default(35), // in km
   travelFeeAccepted: z.coerce.boolean().optional(),
-  status: z.enum(['draft', 'open', 'quoted', 'accepted', 'active', 'completed', 'cancelled']).optional().default('open'),
+  status: jobStatusEnum.optional().default('open'),
 });
