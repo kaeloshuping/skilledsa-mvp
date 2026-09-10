@@ -1,7 +1,11 @@
 import { Request, Response } from 'express';
 import { JobService } from '../services/jobService.js';
 import { getLogger } from '../utils/logger.js';
-import { createJobSchema, updateJobSchema, listJobsQuerySchema } from '../utils/validation.js';
+import {
+  createJobSchema,
+  updateJobSchema,
+  listJobsQuerySchema,
+} from '../utils/validation.js';
 import { ZodError } from 'zod';
 import { RequestWithId } from '../middleware/requestTracing.js';
 
@@ -41,26 +45,25 @@ export class JobController {
         res.status(401).json({ error: 'Unauthenticated' });
         return;
       }
-      // Only customers can list their own jobs
-      if (req.user.role !== 'customer') {
-        res.status(403).json({ error: 'Only customers can list their jobs' });
-        return;
-      }
-      // Parse query with customerId (taken from authenticated user)
+
       const query = listJobsQuerySchema.parse(req.query);
-      const jobs = await JobService.listJobs({
-        ...query,
-        customerId: req.user.user_id,
-      });
-      // Transform to JobSummary format
-      const summary = jobs.map(job => ({
+
+      // Explicit log for city filtering (task requirement)
+      if (query.city) {
+        log.info('[BE1] - Filtering jobs by city:', { city: query.city });
+      }
+
+      const jobs = await JobService.listJobs(query);
+
+      const summary = jobs.map((job) => ({
         id: job.id,
         title: job.title || 'Untitled',
         trade: job.trade || '',
         status: job.status,
-        quoteCount: 0, // quotes not yet implemented
+        quoteCount: 0,
         createdAt: job.created_at.toISOString(),
       }));
+
       res.json(summary);
     } catch (error) {
       if (error instanceof ZodError) {

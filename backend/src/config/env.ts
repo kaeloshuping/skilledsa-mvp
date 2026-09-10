@@ -8,13 +8,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load .env from the project root (two levels up from src/config)
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const envSchema = z.object({
   // App
-  NODE_ENV: z
-    .enum(["development", "test", "production"])
-    .default("development"),
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(3000),
   APP_NAME: z.string().default("SkilledSA"),
   API_URL: z.string().url(),
@@ -37,6 +35,9 @@ const envSchema = z.object({
 
   // Google Maps
   GOOGLE_MAPS_API_KEY: z.string().min(1, "Google Maps API key is required"),
+
+  // File upload mode (local | s3). If omitted, defaults based on NODE_ENV.
+  UPLOAD_MODE: z.enum(["local", "s3"]).optional(),
 
   // Email (SendGrid)
   SENDGRID_API_KEY: z.string().min(1),
@@ -61,4 +62,14 @@ const envSchema = z.object({
   FEATURE_REFERRALS: z.coerce.boolean().default(false),
 });
 
-export const env = envSchema.parse(process.env);
+const parsed = envSchema.parse(process.env);
+
+/**
+ * Runtime environment.
+ * `UPLOAD_MODE` defaults to `local` in development and `s3` in production.
+ */
+export const env = {
+  ...parsed,
+  UPLOAD_MODE:
+    parsed.UPLOAD_MODE ?? (parsed.NODE_ENV === "production" ? "s3" : "local"),
+};
