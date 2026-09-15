@@ -5,6 +5,9 @@ import { getLogger } from '../utils/logger.js';
 export class JobService {
   /**
    * Create a new job.
+   *
+   * Note: `city` is required (used for city-based filtering).
+   * `address` is optional (street address).
    */
   static async createJob(data: {
     customerId: string;
@@ -16,6 +19,8 @@ export class JobService {
     locationLng: number;
     needsConsultation: boolean;
     travelFeeAccepted: boolean;
+    city: string;            // NEW – required by schema
+    address?: string;        // NEW – optional street address
   }) {
     const log = getLogger();
     const { customerId, locationLat, locationLng, ...rest } = data;
@@ -34,6 +39,10 @@ export class JobService {
         locationLng,
         location: locationWkt,
         status: 'open',
+        // --- NEW: manual location fields ---
+        city: rest.city,
+        address: rest.address,
+        // -----------------------------------
       },
     });
 
@@ -73,14 +82,10 @@ export class JobService {
     if (trade) where.trade = trade;
     if (travelFeeAccepted !== undefined) where.travelFeeAccepted = travelFeeAccepted;
 
-    // City filter (case-insensitive). BE2 will add the `city` field to Job.
+    // City filter (case-insensitive). The `city` field now exists on Job (added by BE2).
     if (city) {
       log.info('[BE1] - Filtering jobs by city:', { city });
-      (
-        where as Prisma.JobWhereInput & {
-          city?: { equals: string; mode: 'insensitive' };
-        }
-      ).city = { equals: city, mode: 'insensitive' };
+      where.city = { equals: city, mode: 'insensitive' };
     }
 
     // Location filter (only when no city is provided and lat/lng given)
@@ -202,6 +207,8 @@ export class JobService {
       needsConsultation: boolean;
       travelFeeAccepted: boolean;
       status: JobStatus;
+      city: string;           // NEW
+      address: string;        // NEW
     }>,
   ) {
     const log = getLogger();

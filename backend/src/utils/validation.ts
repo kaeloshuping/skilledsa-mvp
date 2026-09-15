@@ -84,7 +84,10 @@ export const verificationReviewSchema = z.object({
 
 /**
  * Schema for creating a job.
- * All fields are required for creation.
+ *
+ * `city` is required (used for city-based filtering; matches the
+ * `Job.city` column added by BE2 in the add_manual_location_fields
+ * migration). `address` is optional.
  */
 export const createJobSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -95,10 +98,15 @@ export const createJobSchema = z.object({
   locationLng: z.number().min(-180).max(180, "Longitude must be between -180 and 180"),
   needsConsultation: z.boolean().default(false),
   travelFeeAccepted: z.boolean().default(true),
+  // --- Manual location fields (BE2, Sprint 3) ---
+  city: z.string().min(1, "City is required"),
+  address: z.string().optional(),
+  // ----------------------------------------------
 });
 
 /**
  * Schema for updating a job.
+ * `.partial()` makes every field optional — including the new `city`/`address`.
  */
 export const updateJobSchema = createJobSchema.partial();
 
