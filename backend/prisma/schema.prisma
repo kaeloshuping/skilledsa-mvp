@@ -63,6 +63,11 @@ model User {
   created_at              DateTime            @default(now())
   updated_at              DateTime            @updatedAt
 
+  // --- NEW: Manual location fields (used for city-based filtering) ---
+  address                 String?             // Street address (optional for users)
+  city                    String?             // City name (optional for users)
+  // --------------------------------------------------------------------
+
   jobs_as_customer        Job[]                      @relation("CustomerJobs")
   jobs_as_contractor      Job[]                      @relation("ContractorJobs")
   admin_logs              AdminLog[]                 @relation("AdminLogs")
@@ -74,6 +79,7 @@ model User {
   @@index([email])
   @@index([role])
   @@index([verification_status])
+  @@index([city])   // NEW: helps with city-based user lookups
 }
 
 model VerificationRequest {
@@ -126,19 +132,19 @@ model FileUpload {
 }
 
 model EscrowTransaction {
-  id                    String          @id @default(uuid())
-  job_id                String          @unique
+  id                       String          @id @default(uuid())
+  job_id                   String          @unique
   stripe_payment_intent_id String?
-  stripe_transfer_id    String?
-  idempotency_key       String?         @unique
-  amount_total          Decimal?        @db.Decimal(10,2)
-  amount_contractor     Decimal?        @db.Decimal(10,2)
-  amount_platform       Decimal?        @db.Decimal(10,2)
-  status                EscrowStatus    @default(created)
-  admin_clawback_rever  Boolean?
-  created_at            DateTime        @default(now())
+  stripe_transfer_id       String?
+  idempotency_key          String?         @unique
+  amount_total             Decimal?        @db.Decimal(10,2)
+  amount_contractor        Decimal?        @db.Decimal(10,2)
+  amount_platform          Decimal?        @db.Decimal(10,2)
+  status                   EscrowStatus    @default(created)
+  admin_clawback_rever     Boolean?
+  created_at               DateTime        @default(now())
 
-  job                   Job             @relation(fields: [job_id], references: [id])
+  job                      Job             @relation(fields: [job_id], references: [id])
 
   @@index([job_id])
 }
@@ -152,16 +158,19 @@ model Job {
   travel_fee            Decimal?        @db.Decimal(10,2)
   total_value           Decimal?        @db.Decimal(10,2)
 
-  // --- NEW FIELDS (added for job creation) ---
   title                 String          @db.VarChar(255)
   description           String          @db.Text
   trade                 String          @db.VarChar(100)
   photos                Json?           // array of photo URLs
-  locationLat           Float?          // latitude for quick access
-  locationLng           Float?          // longitude for quick access
+  locationLat           Float?          // latitude for quick access (optional)
+  locationLng           Float?          // longitude for quick access (optional)
   needsConsultation     Boolean         @default(false)
   travelFeeAccepted     Boolean         @default(false)
-  // -----------------------------------------
+
+  // --- NEW: Manual location fields (city is required for filtering) ---
+  address               String?         // Street address entered by customer
+  city                  String          // City name (required for city-based filtering)
+  // ------------------------------------------------------------------
 
   created_at            DateTime        @default(now())
   updated_at            DateTime        @updatedAt
@@ -172,6 +181,7 @@ model Job {
 
   @@index([status])
   @@index([trade])
+  @@index([city])                      // NEW: fast city filtering
   @@index([locationLat, locationLng])
   // GIST index for location is created via raw SQL in migration
 }
