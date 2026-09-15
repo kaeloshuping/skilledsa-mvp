@@ -22,3 +22,9 @@ Thumbs.db
 data/
 
 *.pem
+
+# ============================================
+# Local uploads – ignore files but keep folder
+# ============================================
+backend/uploads/*
+!backend/uploads/.gitkeep
