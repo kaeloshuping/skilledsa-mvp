@@ -39,6 +39,9 @@ const envSchema = z.object({
   // File upload mode (local | s3). If omitted, defaults based on NODE_ENV.
   UPLOAD_MODE: z.enum(["local", "s3"]).optional(),
 
+  // Directory for local file uploads (only used when UPLOAD_MODE=local).
+  UPLOAD_DIR: z.string().optional(),
+
   // Email (SendGrid)
   SENDGRID_API_KEY: z.string().min(1),
   SENDGRID_FROM_EMAIL: z.string().email(),
@@ -66,10 +69,12 @@ const parsed = envSchema.parse(process.env);
 
 /**
  * Runtime environment.
- * `UPLOAD_MODE` defaults to `local` in development and `s3` in production.
+ * - `UPLOAD_MODE` defaults to `local` in development and `s3` in production.
+ * - `UPLOAD_DIR` defaults to `./uploads` when not provided (used only in local mode).
  */
 export const env = {
   ...parsed,
   UPLOAD_MODE:
     parsed.UPLOAD_MODE ?? (parsed.NODE_ENV === "production" ? "s3" : "local"),
+  UPLOAD_DIR: parsed.UPLOAD_DIR ?? "./uploads",
 };
