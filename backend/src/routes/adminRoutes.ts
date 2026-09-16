@@ -11,5 +11,6 @@ router.use(authenticate);
 router.use(requireRole(['admin']));
 
 router.get('/users', AdminController.listUsers);
+router.post('/users/:id/verify', AdminController.verifyUser);
 
 export default router;

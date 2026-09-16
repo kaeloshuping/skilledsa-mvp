@@ -30,4 +30,42 @@ export class AdminController {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+  /**
+   * POST /api/v1/admin/users/:id/verify
+   * Admin-only. Marks the user as verified and, if a pending verification request
+   * exists, syncs it with `status = 'verified'` and a `reviewed_at` timestamp.
+   */
+  static async verifyUser(req: Request, res: Response): Promise<void> {
+    const log = getLogger((req as RequestWithId).requestId);
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Unauthenticated' });
+        return;
+      }
+
+      const { id } = req.params;
+
+      const user = await UserService.setVerificationStatus(
+        id,
+        'verified',
+        req.user.user_id,
+      );
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      log.info('[BE1] - Admin verified user', {
+        userId: id,
+        adminId: req.user.user_id,
+      });
+
+      res.json({ user });
+    } catch (error) {
+      log.error('[BE1] - Verify user error', { error: (error as Error).message });
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
 }

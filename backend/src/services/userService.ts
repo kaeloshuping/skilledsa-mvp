@@ -100,12 +100,8 @@ export class UserService {
     const updateData: Prisma.UserUpdateInput = {};
     if (data.fullName !== undefined) updateData.full_name = data.fullName;
     if (data.phone !== undefined) updateData.phone = data.phone;
-    if (data.address !== undefined) {
-      (updateData as Prisma.UserUpdateInput & { address?: string }).address = data.address;
-    }
-    if (data.city !== undefined) {
-      (updateData as Prisma.UserUpdateInput & { city?: string }).city = data.city;
-    }
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.city !== undefined) updateData.city = data.city;
     if (data.notificationPrefs !== undefined) {
       updateData.notification_preference = data.notificationPrefs as Prisma.InputJsonValue;
     }
@@ -216,10 +212,6 @@ export class UserService {
           verification_status: true,
           is_active: true,
           created_at: true,
-          // city is expected from BE2; Prisma will expose it once the field exists.
-          // If the field isn't there yet, remove this line.
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore – field will be present once BE2 updates schema
           city: true,
         },
       }),
@@ -235,10 +227,82 @@ export class UserService {
       verificationStatus: u.verification_status,
       isActive: u.is_active,
       createdAt: u.created_at,
-      city: (u as { city?: string | null }).city ?? null,
+      city: u.city ?? null,
     }));
 
     log.debug('[BE1] - Admin listed users', { count: users.length, total, page, limit });
     return { users, total, page, limit };
+  }
+
+  /**
+   * Set a user's verification status and update their VerificationRequest (if pending).
+   *
+   * This is used by admins to approve or reject a user's verification directly,
+   * as well as by future self-service flows.
+   *
+   * Behaviour:
+   *  - Updates `User.verification_status` to the requested status.
+   *  - If the user has a `VerificationRequest` in `pending` state, it is marked
+   *    with the same status and `reviewed_at` is set to now. If `adminId` is
+   *    provided, it is recorded on the request as `admin_id`.
+   *  - Runs in a single transaction so the User and VerificationRequest never
+   *    disagree.
+   *
+   * @param userId  – the target user ID
+   * @param status  – 'verified' or 'rejected'
+   * @param adminId – optional; the admin performing the action (for audit trail)
+   * @param notes   – optional; reason for the decision (only used on rejection typically)
+   * @returns the updated user (excluding password_hash), or null if not found
+   */
+  static async setVerificationStatus(
+    userId: string,
+    status: 'verified' | 'rejected',
+    adminId?: string,
+    notes?: string,
+  ): Promise<Omit<User, 'password_hash'> | null> {
+    const log = getLogger();
+
+    const existing = await prisma.user.findUnique({ where: { id: userId } });
+    if (!existing) {
+      log.warn('[BE1] - setVerificationStatus: user not found', { userId });
+      return null;
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Update the user's verification status
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: { verification_status: status },
+      });
+
+      // 2. If a pending VerificationRequest exists, sync it
+      const verificationRequest = await tx.verificationRequest.findUnique({
+        where: { user_id: userId },
+      });
+
+      if (verificationRequest && verificationRequest.status === 'pending') {
+        await tx.verificationRequest.update({
+          where: { id: verificationRequest.id },
+          data: {
+            status,
+            admin_id: adminId ?? null,
+            admin_notes: notes ?? null,
+            reviewed_at: new Date(),
+          },
+        });
+      }
+
+      return updatedUser;
+    });
+
+    log.info('[BE1] - User verification status set', {
+      userId,
+      status,
+      adminId: adminId ?? null,
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password_hash, ...userWithoutPassword } = result;
+    return userWithoutPassword;
   }
 }
