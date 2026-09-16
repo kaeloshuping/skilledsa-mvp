@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import styles from './Landing.module.css';
 
 export const Landing: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();   // <-- ADDED user
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   // If already logged in, redirect to the appropriate dashboard based on role
@@ -13,8 +13,12 @@ export const Landing: React.FC = () => {
     if (isAuthenticated && user) {
       if (user.role === 'admin') {
         navigate('/admin/dashboard', { replace: true });
-      } else {
+      } else if (user.role === 'contractor') {
+        navigate('/contractor/dashboard', { replace: true });
+      } else if (user.role === 'customer') {
         navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
       }
     }
   }, [isAuthenticated, user, navigate]);
@@ -42,7 +46,6 @@ export const Landing: React.FC = () => {
           </div>
         </div>
         <div className={styles.heroImage}>
-          {/* Decorative SVG or emoji – keeps it light */}
           <div className={styles.imagePlaceholder}>
             <span role="img" aria-label="Construction tools">🔧⚡🛠️</span>
           </div>

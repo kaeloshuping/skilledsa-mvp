@@ -1,18 +1,18 @@
 // src/pages/customer/PostJob.tsx
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { JobService } from '../../services/jobService';
 import { FileUpload, type UploadedFile } from '../../components/common/FileUpload';
 import { Toggle } from '../../components/common/Toggle';
-import { LocationPicker } from '../../components/common/LocationPicker';
 import { useToast } from '../../stores/toastStore';
 import styles from './PostJob.module.css';
 
 const trades = ['Plumbing', 'Electrical', 'Building/Tiling', 'Painting', 'Carpentry', 'Appliance Repair'];
+const CITIES = ['Johannesburg', 'Pretoria', 'Cape Town', 'Durban', 'Port Elizabeth'];
 
 export const PostJob: React.FC = () => {
-  useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -20,15 +20,14 @@ export const PostJob: React.FC = () => {
   const [description, setDescription] = useState('');
   const [trade, setTrade] = useState(trades[0]);
   const [photos, setPhotos] = useState<UploadedFile[]>([]);
+  const [address, setAddress] = useState(user?.address || '');
+  const [city, setCity] = useState(user?.city || 'Johannesburg');
   const [needsConsultation, setNeedsConsultation] = useState(false);
   const [travelFeeWilling, setTravelFeeWilling] = useState(true);
-  const [location, setLocation] = useState({ lat: -26.2041, lng: 28.0473 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLocationChange = useCallback((lat: number, lng: number) => {
-    setLocation({ lat, lng });
-  }, []);
+  const isVerified = user?.verification_status === 'verified';
 
   const handlePhotosChange = (files: UploadedFile[]) => {
     setPhotos(files);
@@ -44,6 +43,12 @@ export const PostJob: React.FC = () => {
     e.preventDefault();
     setError(null);
 
+    // Verification check
+    if (!isVerified) {
+      setError('You must verify your account before posting a job. Please click "Verify Now" above.');
+      return;
+    }
+
     // Validation
     if (!title.trim()) {
       setError('Title is required');
@@ -55,6 +60,14 @@ export const PostJob: React.FC = () => {
     }
     if (!trade) {
       setError('Please select a trade');
+      return;
+    }
+    if (!address.trim()) {
+      setError('Address is required');
+      return;
+    }
+    if (!city) {
+      setError('Please select a city');
       return;
     }
     const uploadedPhotos = photos.filter(p => p.status === 'done' && p.url);
@@ -72,10 +85,8 @@ export const PostJob: React.FC = () => {
         description: description.trim(),
         trade,
         photos: photoUrls,
-        location: {
-          lat: location.lat,
-          lng: location.lng,
-        },
+        address: address.trim(),
+        city,
         needsConsultation,
         travelFeeWilling,
       });
@@ -85,8 +96,6 @@ export const PostJob: React.FC = () => {
     } catch (err: unknown) {
       console.error('[FE1] - Create job error', err);
       let message = 'Failed to create job';
-
-      // Type guard for Axios-like error
       if (err && typeof err === 'object' && 'response' in err) {
         const response = err.response;
         if (response && typeof response === 'object' && 'data' in response) {
@@ -98,7 +107,6 @@ export const PostJob: React.FC = () => {
       } else if (err instanceof Error) {
         message = err.message;
       }
-
       setError(message);
     } finally {
       setLoading(false);
@@ -110,6 +118,19 @@ export const PostJob: React.FC = () => {
       <div className={styles.card}>
         <h1 className={styles.title}>Post a Job</h1>
         <p className={styles.subtitle}>Tell us what you need, and get quotes from trusted contractors.</p>
+
+        {!isVerified && (
+          <div className={styles.verificationWarning}>
+            <span>⚠️ You must verify your account before posting a job.</span>
+            <button
+              type="button"
+              className={styles.verifyButton}
+              onClick={() => navigate('/verify')}
+            >
+              Verify Now
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
@@ -164,12 +185,30 @@ export const PostJob: React.FC = () => {
           </div>
 
           <div className={styles.field}>
-            <LocationPicker
-              label="Job Location"
-              onLocationChange={handleLocationChange}
-              initialLat={location.lat}
-              initialLng={location.lng}
+            <label htmlFor="address">Street Address</label>
+            <input
+              id="address"
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="e.g., 123 Main Road, Sandton"
+              required
+              disabled={loading}
             />
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="city">City</label>
+            <select
+              id="city"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              disabled={loading}
+            >
+              {CITIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
 
           <div className={styles.field}>
@@ -199,7 +238,7 @@ export const PostJob: React.FC = () => {
           <button
             type="submit"
             className={styles.primaryButton}
-            disabled={loading}
+            disabled={loading || !isVerified}
           >
             {loading ? 'Creating job...' : 'Post Job'}
           </button>

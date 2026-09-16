@@ -1,0 +1,51 @@
+/* src/components/dashboard/VerificationBanner.module.css */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  border-left: 4px solid transparent;
+}
+
+.verified {
+  background: rgba(46, 139, 87, 0.1);
+  border-left-color: var(--color-secondary-success);
+}
+
+.pending {
+  background: rgba(230, 126, 34, 0.1);
+  border-left-color: var(--color-secondary-warning);
+}
+
+.rejected {
+  background: rgba(192, 57, 43, 0.1);
+  border-left-color: var(--color-secondary-error);
+}
+
+.icon {
+  font-size: 20px;
+}
+
+.message {
+  flex: 1;
+  font-size: 15px;
+  color: var(--color-text-primary);
+}
+
+.verifyButton {
+  padding: 8px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.verifyButton:hover {
+  opacity: 0.85;
+}

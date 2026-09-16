@@ -11,7 +11,7 @@ interface LoginProps {
   redirectTo?: string;
 }
 
-export const Login: React.FC<LoginProps> = ({ redirectTo = '/dashboard' }) => {
+export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoading, error, clearError } = useAuth();
@@ -20,7 +20,7 @@ export const Login: React.FC<LoginProps> = ({ redirectTo = '/dashboard' }) => {
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Use the provided redirectTo or the 'from' state, default to '/dashboard'
+  // Use the provided redirectTo or the 'from' state, default to '/'
   const from = (location.state as { from?: string })?.from || redirectTo;
 
   const handleSubmit = async (e: React.FormEvent) => {

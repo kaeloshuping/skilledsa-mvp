@@ -61,7 +61,7 @@
   font-weight: 500;
 }
 
-.distance {
+.city {
   color: var(--color-text-secondary);
 }
 
@@ -112,7 +112,6 @@
     flex-direction: column;
     align-items: stretch;
   }
-
   .thumbnail {
     width: 100%;
     height: 120px;

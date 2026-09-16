@@ -8,15 +8,8 @@ interface BrowseJobCardProps {
   job: ContractorJob;
 }
 
-/**
- * Job card for contractor browsing (matches UI spec Section 2.4).
- */
 export const BrowseJobCard: React.FC<BrowseJobCardProps> = ({ job }) => {
-  const { id, title, trade, distance, status, photos, customer } = job;
-
-  const distanceText = distance !== undefined && distance !== null
-    ? `${distance.toFixed(1)}km away`
-    : 'Distance unknown';
+  const { id, title, trade, city, status, photos, customer } = job;
 
   const statusBadgeClass = (() => {
     switch (status) {
@@ -45,13 +38,13 @@ export const BrowseJobCard: React.FC<BrowseJobCardProps> = ({ job }) => {
           <h3 className={styles.title}>{title}</h3>
           <div className={styles.meta}>
             <span className={styles.trade}>{trade}</span>
-            <span className={styles.distance}>{distanceText}</span>
+            <span className={styles.city}>📍 {city}</span>
           </div>
           <div className={styles.footer}>
             <span className={`${styles.badge} ${statusBadgeClass}`}>
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </span>
-            {customer.rating && (
+            {customer.rating !== undefined && (
               <span className={styles.rating}>⭐ {customer.rating.toFixed(1)}</span>
             )}
           </div>
