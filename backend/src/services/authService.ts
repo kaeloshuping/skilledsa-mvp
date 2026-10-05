@@ -160,20 +160,30 @@ export class AuthService {
   }
 
   /**
-   * Logout: revoke the specific refresh token.
+   * Logout: revoke the given refresh token.
+   * IDEMPOTENT — if the token is missing, already revoked, or unknown, we still succeed.
    */
-  static async logout(refreshToken: string): Promise<void> {
+  static async logout(refreshToken?: string): Promise<void> {
     const log = getLogger();
+
+    if (!refreshToken) {
+      log.info('[BE1] - Logout called without a refresh token; nothing to revoke (idempotent)');
+      return;
+    }
+
     const tokenHash = hashRefreshToken(refreshToken);
     const storedToken = await prisma.refreshToken.findUnique({
       where: { token_hash: tokenHash },
     });
-    if (storedToken) {
+
+    if (storedToken && !storedToken.revoked) {
       await prisma.refreshToken.update({
         where: { id: storedToken.id },
         data: { revoked: true },
       });
-      log.info('[BE1] - Refresh token revoked');
+      log.info('[BE1] - Refresh token revoked', { tokenId: storedToken.id });
+    } else {
+      log.info('[BE1] - No active refresh token found to revoke (idempotent)');
     }
   }
 }

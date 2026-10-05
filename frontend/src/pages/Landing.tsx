@@ -5,15 +5,19 @@ import { useAuth } from '../hooks/useAuth';
 import styles from './Landing.module.css';
 
 export const Landing: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();   // <-- ADDED user
   const navigate = useNavigate();
 
-  // If already logged in, redirect to dashboard
+  // If already logged in, redirect to the appropriate dashboard based on role
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+    if (isAuthenticated && user) {
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   return (
     <div className={styles.landing}>

@@ -63,6 +63,7 @@ model User {
   @@index([email])
   @@index([role])
   @@index([verification_status])
+  @@index([city])   // NEW: helps with city-based user lookups
 }
 
 model VerificationRequest {

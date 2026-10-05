@@ -39,6 +39,8 @@ async function main() {
       full_name: 'Test Customer',
       phone: '+27821234567',
       popia_consent: true,
+      city: "Johannesburg",
+      address: "10 Sandton Drive, Sandton, Johannesburg",
     },
   });
 
@@ -52,6 +54,8 @@ async function main() {
       full_name: 'Test Contractor',
       phone: '+27827654321',
       popia_consent: true,
+      city: "Pretoria",
+      address: "25 Church Street, Pretoria",
     },
   });
 
