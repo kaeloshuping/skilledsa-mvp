@@ -8,10 +8,10 @@ import { getLogger } from '../../utils/logger';
 const log = getLogger('Login');
 
 interface LoginProps {
-  redirectTo?: string; // Where to redirect after successful login
+  redirectTo?: string;
 }
 
-export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
+export const Login: React.FC<LoginProps> = ({ redirectTo = '/dashboard' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoading, error, clearError } = useAuth();
@@ -20,7 +20,7 @@ export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // If redirectTo is not provided, use the 'from' location state or default to '/'
+  // Use the provided redirectTo or the 'from' state, default to '/dashboard'
   const from = (location.state as { from?: string })?.from || redirectTo;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,7 +37,6 @@ export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
 
     try {
       await login({ email, password });
-      // Redirect to the intended destination
       navigate(from, { replace: true });
       log.info('Login successful, redirecting to', from);
     } catch (err) {
@@ -45,9 +44,6 @@ export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
     }
   };
 
-  // ... rest of the component unchanged (the render)
-  // Just ensure the footer link to signup points to the appropriate signup page.
-  // We can conditionally change the signup link based on the current route.
   const signupPath = location.pathname.startsWith('/admin') ? '/admin/signup' : '/signup';
 
   return (
@@ -59,7 +55,6 @@ export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
         </p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* ... fields unchanged ... */}
           <div className={styles.field}>
             <label htmlFor="email">Email</label>
             <input

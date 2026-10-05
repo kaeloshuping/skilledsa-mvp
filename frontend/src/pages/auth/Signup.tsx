@@ -10,13 +10,13 @@ import { getLogger } from '../../utils/logger';
 const log = getLogger('Signup');
 
 interface SignupProps {
-  allowedRoles?: Role[]; // restrict which roles are shown
-  redirectTo?: string;   // where to redirect after signup
+  allowedRoles?: Role[];
+  redirectTo?: string;
 }
 
 export const Signup: React.FC<SignupProps> = ({
-  allowedRoles = ['customer', 'contractor'], // default for public signup
-  redirectTo = '/verify',                    // default for customers/contractors
+  allowedRoles = ['customer', 'contractor'],
+  redirectTo = '/dashboard', // Changed from '/verify' to '/dashboard'
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,7 +48,6 @@ export const Signup: React.FC<SignupProps> = ({
     clearError();
     setLocalError(null);
 
-    // Validation
     if (!email || !password || !fullName || !role) {
       setLocalError('All fields are required');
       return;
@@ -75,7 +74,7 @@ export const Signup: React.FC<SignupProps> = ({
         phone: phone || undefined,
         popia_consent: popiaConsent,
       });
-      // Redirect to the specified path
+      // Redirect to dashboard (the dashboard will show the verification banner)
       navigate(redirectTo);
       log.info('Signup successful, redirecting to', redirectTo);
     } catch (err) {
@@ -83,7 +82,6 @@ export const Signup: React.FC<SignupProps> = ({
     }
   };
 
-  // Determine login link based on current route
   const loginPath = location.pathname.startsWith('/admin') ? '/admin/login' : '/login';
 
   return (
@@ -95,7 +93,6 @@ export const Signup: React.FC<SignupProps> = ({
         </p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* ... fields unchanged ... */}
           <div className={styles.field}>
             <label htmlFor="fullName">Full Name</label>
             <input

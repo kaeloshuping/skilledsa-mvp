@@ -8,6 +8,12 @@ import {
 } from '../utils/validation.js';
 import { ZodError } from 'zod';
 import { RequestWithId } from '../middleware/requestTracing.js';
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  hashRefreshToken,
+} from '../utils/jwt.js';
+import prisma from '../config/database.js';
 
 export class AuthController {
   /**
@@ -18,8 +24,29 @@ export class AuthController {
     try {
       const data = signupSchema.parse(req.body);
       const user = await AuthService.register(data);
-      log.info('[BE1] - Signup successful', { userId: user.id });
-      res.status(201).json({ user });
+
+      const payload = {
+        user_id: user.id,
+        email: user.email,
+        role: user.role,
+        verification_status: user.verification_status,
+      };
+      const accessToken = generateAccessToken(payload);
+      const refreshToken = generateRefreshToken(payload);
+
+      const tokenHash = hashRefreshToken(refreshToken);
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await prisma.refreshToken.create({
+        data: {
+          user_id: user.id,
+          token_hash: tokenHash,
+          expires_at: expiresAt,
+          revoked: false,
+        },
+      });
+
+      log.info('[BE1] - Signup successful with tokens', { userId: user.id });
+      res.status(201).json({ user, accessToken, refreshToken });
     } catch (error) {
       if (error instanceof ZodError) {
         res.status(400).json({ error: 'Validation error', details: error.errors });
@@ -72,18 +99,29 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/logout
+   * Idempotent. Accepts a refresh token from the body OR the Authorization header.
    */
   static async logout(req: Request, res: Response): Promise<void> {
     const log = getLogger((req as RequestWithId).requestId);
     try {
-      const { refreshToken } = req.body;
+      // Accept refresh token from body, or fall back to the Bearer token
+      let refreshToken: string | undefined = req.body?.refreshToken;
       if (!refreshToken) {
-        res.status(400).json({ error: 'Refresh token required' });
-        return;
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          refreshToken = authHeader.split(' ')[1];
+        }
       }
+
+      log.debug('[BE1] - Logout request received', {
+        hasBodyToken: Boolean(req.body?.refreshToken),
+        hasHeaderToken: Boolean(req.headers.authorization),
+      });
+
       await AuthService.logout(refreshToken);
+
       log.info('[BE1] - Logout successful');
-      res.status(204).send();
+      res.status(200).json({ success: true, message: 'Logged out successfully' });
     } catch (error) {
       log.error('[BE1] - Logout error', { error: (error as Error).message });
       res.status(500).json({ error: 'Internal server error' });
@@ -100,7 +138,6 @@ export class AuthController {
         res.status(401).json({ error: 'Unauthenticated' });
         return;
       }
-      // We can fetch fresh user data
       const { UserService } = await import('../services/userService.js');
       const user = await UserService.getUserById(req.user.user_id);
       if (!user) {
