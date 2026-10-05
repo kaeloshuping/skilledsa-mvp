@@ -1,0 +1,48 @@
+/* src/components/dashboard/EmptyState.module.css */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  text-align: center;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  min-height: 200px;
+}
+
+.icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.description {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  max-width: 400px;
+  margin: 0 auto var(--spacing-md);
+}
+
+.actionButton {
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.actionButton:hover {
+  opacity: 0.85;
+}

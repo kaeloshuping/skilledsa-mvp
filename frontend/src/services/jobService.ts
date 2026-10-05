@@ -4,13 +4,10 @@ import { getLogger } from '../utils/logger';
 
 const log = getLogger('jobService');
 
-// ============================================================
-// Existing Types (customer job creation)
-// ============================================================
-
+// --- Customer job creation types ---
 export interface JobPhotoUpload {
   file: File;
-  url: string; // presigned URL
+  url: string;
   key: string;
 }
 
@@ -18,28 +15,21 @@ export interface CreateJobData {
   title: string;
   description: string;
   trade: string;
-  photos: string[]; // array of URLs (presigned URLs or keys)
-  location: {
-    lat: number;
-    lng: number;
-  };
+  photos: string[];
+  address: string;
+  city: string;
   needsConsultation: boolean;
   travelFeeWilling: boolean;
 }
 
-/**
- * Full Job response interface for customer (may not include distance/rating).
- */
 export interface Job {
   id: string;
   title: string;
   description: string;
   trade: string;
   photos: string[];
-  location: {
-    lat: number;
-    lng: number;
-  };
+  address: string;
+  city: string;
   needsConsultation: boolean;
   travelFeeWilling: boolean;
   status: string;
@@ -63,28 +53,33 @@ export interface JobSummary {
   createdAt: string;
 }
 
-// ============================================================
-// NEW Types for Contractor Browsing
-// ============================================================
+// --- Contractor browsing types (city-based) ---
+export type City = 'Johannesburg' | 'Pretoria' | 'Cape Town' | 'Durban' | 'Port Elizabeth' | 'all';
 
 export interface ContractorJob {
   id: string;
   title: string;
   description: string;
   trade: string;
-  location: {
-    lat: number;
-    lng: number;
-    address?: string;
-  };
-  distance?: number; // in km (calculated by backend)
+  city: string;
+  address?: string;
+  location?: { lat: number; lng: number; address?: string };
   travelFeeAccepted: boolean;
-  status: 'draft' | 'open' | 'quoted' | 'accepted' | 'milestone1_pending' | 'milestone1_verified' | 'milestone2_pending' | 'completed' | 'disputed';
+  status:
+    | 'draft'
+    | 'open'
+    | 'quoted'
+    | 'accepted'
+    | 'milestone1_pending'
+    | 'milestone1_verified'
+    | 'milestone2_pending'
+    | 'completed'
+    | 'disputed';
   photos: string[];
   customer: {
     id: string;
     full_name: string;
-    rating?: number; // average rating
+    rating?: number;
   };
   createdAt: string;
   updatedAt: string;
@@ -93,9 +88,7 @@ export interface ContractorJob {
 export interface FetchAvailableJobsParams {
   trade?: string;
   search?: string;
-  lat?: number;
-  lng?: number;
-  radius?: number; // in km, default 35
+  city?: City;
   page?: number;
   limit?: number;
 }
@@ -108,15 +101,15 @@ export interface AvailableJobsResponse {
   totalPages: number;
 }
 
-// ============================================================
-// Service Class (existing + new methods)
-// ============================================================
+export interface ContractorStats {
+  available: number;
+  active: number;
+  completed: number;
+}
 
 export class JobService {
-  // --- Existing methods (unchanged) ---
-
   static async getPresignedUrl(fileName: string, contentType: string): Promise<{ url: string; key: string }> {
-    log.info('Getting presigned URL for job photo', { fileName });
+    log.info('Getting presigned URL', { fileName });
     const response = await apiClient.post<{ url: string; key: string }>('/verification/presigned-url', {
       fileName,
       contentType,
@@ -129,26 +122,13 @@ export class JobService {
       const xhr = new XMLHttpRequest();
       xhr.open('PUT', url);
       xhr.setRequestHeader('Content-Type', file.type);
-
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable && onProgress) {
-          const progress = Math.round((event.loaded / event.total) * 100);
-          onProgress(progress);
+          onProgress(Math.round((event.loaded / event.total) * 100));
         }
       };
-
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          resolve();
-        } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
-        }
-      };
-
-      xhr.onerror = () => {
-        reject(new Error('Network error during upload'));
-      };
-
+      xhr.onload = () => (xhr.status === 200 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+      xhr.onerror = () => reject(new Error('Network error during upload'));
       xhr.send(file);
     });
   }
@@ -160,7 +140,6 @@ export class JobService {
   }
 
   static async getJobs(customerId: string, limit?: number): Promise<JobSummary[]> {
-    log.info('Fetching jobs for customer', { customerId, limit });
     const params = new URLSearchParams({ customerId });
     if (limit) params.append('limit', String(limit));
     const response = await apiClient.get<JobSummary[]>(`/jobs?${params.toString()}`);
@@ -168,16 +147,10 @@ export class JobService {
   }
 
   static async getJobStats(customerId: string): Promise<JobStats> {
-    log.info('Fetching job stats for customer', { customerId });
     const response = await apiClient.get<JobStats>(`/jobs/stats?customerId=${customerId}`);
     return response.data;
   }
 
-  // --- NEW methods for contractor browsing ---
-
-  /**
-   * Fetch available jobs for contractors with filters and geolocation.
-   */
   static async getAvailableJobs(params: FetchAvailableJobsParams): Promise<AvailableJobsResponse> {
     log.info('Fetching available jobs', params);
     const response = await apiClient.get<AvailableJobsResponse>('/jobs/available', { params });
@@ -185,13 +158,18 @@ export class JobService {
     return response.data;
   }
 
-  /**
-   * Fetch a single job by ID (for contractor detail view).
-   */
   static async getJobById(id: string): Promise<ContractorJob> {
-    log.info('Fetching job by ID', { id });
     const response = await apiClient.get<{ data: ContractorJob }>(`/jobs/${id}`);
     console.log('[FE2] - Fetched job detail:', response.data.data.id);
     return response.data.data;
+  }
+
+  static async getContractorStats(contractorId: string, trade?: string, city?: string): Promise<ContractorStats> {
+    log.info('Fetching contractor stats', { contractorId, trade, city });
+    const response = await apiClient.get<ContractorStats>(`/contractors/${contractorId}/stats`, {
+      params: { trade, city },
+    });
+    console.log('[FE2] - Contractor stats fetched:', response.data);
+    return response.data;
   }
 }

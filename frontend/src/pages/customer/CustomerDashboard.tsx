@@ -5,11 +5,12 @@ import { useAuth } from '../../hooks/useAuth';
 import { JobService } from '../../services/jobService';
 import type { JobStats, JobSummary } from '../../services/jobService';
 import { JobCard } from '../../components/jobs/JobCard';
+import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../stores/toastStore';
 import styles from './CustomerDashboard.module.css';
 
 export const CustomerDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -17,6 +18,7 @@ export const CustomerDashboard: React.FC = () => {
   const [recentJobs, setRecentJobs] = useState<JobSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -59,6 +61,21 @@ export const CustomerDashboard: React.FC = () => {
     navigate(`/dashboard?filter=${status}`);
   };
 
+  const handleLogout = async () => {
+    console.log('[FE1] - Logout button clicked');
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
+  const handlePostJobClick = () => {
+    if (!isVerified) {
+      console.log('[FE1] - Unverified user attempted to post a job - showing modal');
+      setShowVerifyModal(true);
+    } else {
+      navigate('/post-job');
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -79,6 +96,27 @@ export const CustomerDashboard: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      {/* Header with logout */}
+      <header className={styles.header}>
+        <span className={styles.brand}>SkilledSA</span>
+        <div className={styles.headerMenu}>
+          <button
+            className={styles.menuButton}
+            onClick={() => navigate('/profile')}
+            title="View profile"
+          >
+            👤 Profile
+          </button>
+          <button
+            className={styles.menuButton}
+            onClick={handleLogout}
+            title="Log out"
+          >
+            🚪 Logout
+          </button>
+        </div>
+      </header>
+
       {/* Verification Banner */}
       {!isVerified && (
         <div className={styles.verificationBanner}>
@@ -121,9 +159,7 @@ export const CustomerDashboard: React.FC = () => {
       <div className={styles.quickActions}>
         <button
           className={styles.primaryButton}
-          onClick={() => navigate('/post-job')}
-          disabled={!isVerified}
-          title={!isVerified ? 'You must verify your account to post a job' : ''}
+          onClick={handlePostJobClick}
         >
           ➕ Post a Job
         </button>
@@ -153,9 +189,7 @@ export const CustomerDashboard: React.FC = () => {
             <p className={styles.emptySubtext}>Get started by posting your first job!</p>
             <button
               className={styles.primaryButton}
-              onClick={() => navigate('/post-job')}
-              disabled={!isVerified}
-              title={!isVerified ? 'You must verify your account to post a job' : ''}
+              onClick={handlePostJobClick}
             >
               Post a Job
             </button>
@@ -176,6 +210,35 @@ export const CustomerDashboard: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* Verification Required Modal */}
+      <Modal
+        isOpen={showVerifyModal}
+        onClose={() => setShowVerifyModal(false)}
+        title="Verification Required"
+      >
+        <p className={styles.modalText}>
+          You need to verify your identity first before you can post jobs.
+          This helps us keep the platform safe for everyone.
+        </p>
+        <div className={styles.modalActions}>
+          <button
+            className={styles.modalSecondary}
+            onClick={() => setShowVerifyModal(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className={styles.modalPrimary}
+            onClick={() => {
+              setShowVerifyModal(false);
+              navigate('/verify');
+            }}
+          >
+            Verify Now
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

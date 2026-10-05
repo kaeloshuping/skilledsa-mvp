@@ -16,7 +16,7 @@ interface SignupProps {
 
 export const Signup: React.FC<SignupProps> = ({
   allowedRoles = ['customer', 'contractor'],
-  redirectTo = '/dashboard', // Changed from '/verify' to '/dashboard'
+  redirectTo = '/', // Landing handles role-based redirect
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,6 +24,7 @@ export const Signup: React.FC<SignupProps> = ({
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState(''); // <-- added
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<Role | null>(null);
@@ -63,6 +64,12 @@ export const Signup: React.FC<SignupProps> = ({
       return;
     }
 
+    // Password confirmation
+    if (password !== confirmPassword) {
+      setLocalError('Passwords do not match');
+      return;
+    }
+
     console.log('[FE1] - Signup submitted', { email, role, fullName });
 
     try {
@@ -74,7 +81,6 @@ export const Signup: React.FC<SignupProps> = ({
         phone: phone || undefined,
         popia_consent: popiaConsent,
       });
-      // Redirect to dashboard (the dashboard will show the verification banner)
       navigate(redirectTo);
       log.info('Signup successful, redirecting to', redirectTo);
     } catch (err) {
@@ -142,6 +148,23 @@ export const Signup: React.FC<SignupProps> = ({
                   {passwordHasNumber(password) ? '✅' : '❌'} Contains a number
                 </p>
               </div>
+            )}
+          </div>
+
+          {/* Password Confirmation Field */}
+          <div className={styles.field}>
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter your password"
+              required
+              disabled={isLoading}
+            />
+            {confirmPassword.length > 0 && password !== confirmPassword && (
+              <p className={styles.helperError}>Passwords do not match</p>
             )}
           </div>
 

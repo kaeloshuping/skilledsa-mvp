@@ -2,12 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JobService, type ContractorJob } from '../../services/jobService';
+import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import styles from './JobDetail.module.css';
 
 export const JobDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [job, setJob] = useState<ContractorJob | null>(null);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
@@ -17,7 +19,6 @@ export const JobDetail: React.FC = () => {
       navigate('/contractor/jobs');
       return;
     }
-
     const fetchJob = async () => {
       setLoading(true);
       try {
@@ -32,7 +33,6 @@ export const JobDetail: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchJob();
   }, [id, navigate, showToast]);
 
@@ -52,24 +52,25 @@ export const JobDetail: React.FC = () => {
     );
   }
 
-  const distanceText = job.distance !== undefined && job.distance !== null
-    ? `${job.distance.toFixed(1)}km away`
-    : 'Distance unknown';
-
   const statusBadgeClass = (() => {
     switch (job.status) {
-      case 'open':
-        return styles.badgeOpen;
-      case 'accepted':
-        return styles.badgeAccepted;
-      case 'completed':
-        return styles.badgeCompleted;
-      case 'disputed':
-        return styles.badgeDisputed;
-      default:
-        return styles.badgeDefault;
+      case 'open': return styles.badgeOpen;
+      case 'accepted': return styles.badgeAccepted;
+      case 'completed': return styles.badgeCompleted;
+      case 'disputed': return styles.badgeDisputed;
+      default: return styles.badgeDefault;
     }
   })();
+
+  const isVerified = user?.verification_status === 'verified';
+
+  const handleSubmitQuote = () => {
+    if (!isVerified) {
+      showToast('Please verify your profile before applying to jobs.', 'warning');
+      return;
+    }
+    alert('Submit Quote – coming in Sprint 3');
+  };
 
   return (
     <div className={styles.container}>
@@ -87,8 +88,8 @@ export const JobDetail: React.FC = () => {
 
         <div className={styles.meta}>
           <span className={styles.trade}>{job.trade}</span>
-          <span className={styles.distance}>{distanceText}</span>
-          {job.customer.rating && (
+          <span className={styles.city}>📍 {job.city}</span>
+          {job.customer.rating !== undefined && (
             <span className={styles.rating}>⭐ {job.customer.rating.toFixed(1)}</span>
           )}
         </div>
@@ -109,18 +110,28 @@ export const JobDetail: React.FC = () => {
           </div>
         )}
 
-        {job.location && (
+        {job.address && (
           <div className={styles.location}>
             <h3>Location</h3>
-            <p>{job.location.address || `${job.location.lat}, ${job.location.lng}`}</p>
+            <p>{job.address}</p>
             <p><strong>Travel fee accepted:</strong> {job.travelFeeAccepted ? 'Yes' : 'No'}</p>
           </div>
         )}
 
         <div className={styles.actions}>
-          <button className={styles.quoteButton} onClick={() => alert('Submit Quote – Sprint 3')}>
-            Submit Quote
+          <button
+            className={styles.quoteButton}
+            onClick={handleSubmitQuote}
+            disabled={!isVerified}
+            title={!isVerified ? 'Verify your profile to apply' : ''}
+          >
+            {isVerified ? 'Submit Quote' : 'Apply (Verification Required)'}
           </button>
+          {!isVerified && (
+            <button className={styles.verifyButton} onClick={() => navigate('/verify')}>
+              Verify Profile
+            </button>
+          )}
         </div>
       </div>
     </div>

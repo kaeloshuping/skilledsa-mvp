@@ -2,10 +2,19 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { AuthService } from '../services/authService';
-import type { AuthResponse, SignupData, LoginData } from '../services/authService';
-import { getLogger } from '../utils/logger';
+import type { SignupData, LoginData } from '../services/authService';
 
-const log = getLogger('authStore');
+export interface NotificationPreferences {
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+}
+
+export interface BankDetails {
+  bank_name?: string;
+  account_number?: string;
+  branch_code?: string;
+}
 
 export interface User {
   id: string;
@@ -13,10 +22,24 @@ export interface User {
   full_name: string;
   role: string;
   phone: string | null;
+  address?: string | null;
+  city?: string | null;
+  travel_fee_per_km?: number | null;
+  last_travel_fee_change?: string | null;
+  bank_details?: BankDetails | null;
+  notification_preference?: NotificationPreferences | null;
   verification_status: 'pending' | 'verified' | 'rejected';
   is_active: boolean;
   last_login: string | null;
   created_at: string;
+}
+
+interface ApiErrorBody {
+  message?: string;
+  error?: string;
+  errors?: Array<{ msg?: string; message?: string }>;
+  issues?: Array<{ message?: string }>;
+  details?: Array<string | { message?: string; msg?: string }>;
 }
 
 interface AuthState {
@@ -26,7 +49,6 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
 
-  // Actions
   signup: (data: SignupData) => Promise<void>;
   login: (data: LoginData) => Promise<void>;
   logout: () => Promise<void>;
@@ -36,6 +58,60 @@ interface AuthState {
   setUser: (user: User) => void;
   clearError: () => void;
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null;
+};
+
+const extractErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error) return error.message;
+  if (!isRecord(error)) return fallback;
+
+  const response = error.response;
+  if (!isRecord(response)) return fallback;
+  const data = response.data;
+  if (!isRecord(data)) return fallback;
+
+  const apiError = data as ApiErrorBody;
+
+  if (Array.isArray(apiError.details) && apiError.details.length > 0) {
+    const messages: string[] = [];
+    for (const detail of apiError.details) {
+      if (typeof detail === 'string') messages.push(detail);
+      else if (isRecord(detail)) {
+        if (typeof detail.message === 'string') messages.push(detail.message);
+        else if (typeof detail.msg === 'string') messages.push(detail.msg);
+      }
+    }
+    if (messages.length > 0) {
+      const prefix = typeof apiError.error === 'string' ? apiError.error : 'Validation failed';
+      return `${prefix}: ${messages.join('; ')}`;
+    }
+  }
+
+  if (typeof apiError.message === 'string') return apiError.message;
+  if (typeof apiError.error === 'string') return apiError.error;
+
+  if (Array.isArray(apiError.errors) && apiError.errors.length > 0) {
+    const msgs = apiError.errors
+      .map((e) => (isRecord(e) && typeof e.msg === 'string' ? e.msg : ''))
+      .filter((m) => m.length > 0);
+    if (msgs.length > 0) return msgs.join(', ');
+  }
+
+  if (Array.isArray(apiError.issues) && apiError.issues.length > 0) {
+    const msgs = apiError.issues
+      .map((e) => (isRecord(e) && typeof e.message === 'string' ? e.message : ''))
+      .filter((m) => m.length > 0);
+    if (msgs.length > 0) return msgs.join(', ');
+  }
+
+  try {
+    return JSON.stringify(data).slice(0, 200);
+  } catch {
+    return fallback;
+  }
+};
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -56,43 +132,10 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: response.refreshToken,
             isLoading: false,
           });
-          console.log('[FE1] - Store updated after signup');
+          console.log('[FE2] - Store updated after signup');
         } catch (error) {
-          console.error('[FE1] - Signup full error:', error);
-          let message = 'Signup failed. Please try again.';
-
-          if (error && typeof error === 'object' && 'response' in error) {
-            const response = (error as any).response;
-            if (response?.data) {
-              const data = response.data;
-              console.error('[FE1] - Signup response data:', data);
-
-              // --- START FIX: Concatenate validation details ---
-              // If the response has an 'error' field and a 'details' array (from Zod),
-              // build a user-friendly message from the details.
-              if (data.details && Array.isArray(data.details) && data.details.length > 0) {
-                // Extract specific validation messages (e.g., "Password must contain at least one uppercase letter")
-                const detailMessages = data.details
-                  .map((d: any) => d.message || d.msg || d)
-                  .join('; ');
-                message = `${data.error || 'Validation failed'}: ${detailMessages}`;
-              } else if (data.message) {
-                message = data.message;
-              } else if (data.error) {
-                message = data.error;
-              } else if (data.errors && Array.isArray(data.errors)) {
-                // Fallback for other validation formats
-                message = data.errors.map((e: any) => e.msg || e.message || e).join(', ');
-              } else if (data.issues && Array.isArray(data.issues)) {
-                message = data.issues.map((e: any) => e.message).join(', ');
-              } else {
-                // Fallback: show full response as string (but limit length)
-                message = JSON.stringify(data).slice(0, 200);
-              }
-              // --- END FIX ---
-            }
-          }
-
+          console.error('[FE2] - Signup full error:', error);
+          const message = extractErrorMessage(error, 'Signup failed. Please try again.');
           set({ error: message, isLoading: false });
           throw error;
         }
@@ -108,38 +151,10 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: response.refreshToken,
             isLoading: false,
           });
-          console.log('[FE1] - Store updated after login');
+          console.log('[FE2] - Store updated after login');
         } catch (error) {
-          console.error('[FE1] - Login full error:', error);
-          let message = 'Login failed. Please try again.';
-
-          if (error && typeof error === 'object' && 'response' in error) {
-            const response = (error as any).response;
-            if (response?.data) {
-              const data = response.data;
-              console.error('[FE1] - Login response data:', data);
-
-              // --- START FIX: Same improvement for login (though not strictly needed, keep consistent) ---
-              if (data.details && Array.isArray(data.details) && data.details.length > 0) {
-                const detailMessages = data.details
-                  .map((d: any) => d.message || d.msg || d)
-                  .join('; ');
-                message = `${data.error || 'Validation failed'}: ${detailMessages}`;
-              } else if (data.message) {
-                message = data.message;
-              } else if (data.error) {
-                message = data.error;
-              } else if (data.errors && Array.isArray(data.errors)) {
-                message = data.errors.map((e: any) => e.msg || e.message || e).join(', ');
-              } else if (data.issues && Array.isArray(data.issues)) {
-                message = data.issues.map((e: any) => e.message).join(', ');
-              } else {
-                message = JSON.stringify(data).slice(0, 200);
-              }
-              // --- END FIX ---
-            }
-          }
-
+          console.error('[FE2] - Login full error:', error);
+          const message = extractErrorMessage(error, 'Login failed. Please try again.');
           set({ error: message, isLoading: false });
           throw error;
         }
@@ -151,13 +166,13 @@ export const useAuthStore = create<AuthState>()(
           try {
             await AuthService.logout(refreshToken);
           } catch (error) {
-            console.warn('[FE1] - Logout API error, continuing cleanup', error);
+            console.warn('[FE2] - Logout API error, continuing cleanup', error);
           }
         }
         set({ user: null, accessToken: null, refreshToken: null });
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        console.log('[FE1] - Store cleared after logout');
+        console.log('[FE2] - Store cleared after logout');
       },
 
       refreshAccessToken: async () => {
@@ -175,38 +190,10 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: response.refreshToken,
             isLoading: false,
           });
-          console.log('[FE1] - Store updated after token refresh');
+          console.log('[FE2] - Store updated after token refresh');
         } catch (error) {
-          console.error('[FE1] - Refresh full error:', error);
-          let message = 'Refresh failed. Please try again.';
-
-          if (error && typeof error === 'object' && 'response' in error) {
-            const response = (error as any).response;
-            if (response?.data) {
-              const data = response.data;
-              console.error('[FE1] - Refresh response data:', data);
-
-              // --- START FIX: Same improvement for refresh (optional) ---
-              if (data.details && Array.isArray(data.details) && data.details.length > 0) {
-                const detailMessages = data.details
-                  .map((d: any) => d.message || d.msg || d)
-                  .join('; ');
-                message = `${data.error || 'Validation failed'}: ${detailMessages}`;
-              } else if (data.message) {
-                message = data.message;
-              } else if (data.error) {
-                message = data.error;
-              } else if (data.errors && Array.isArray(data.errors)) {
-                message = data.errors.map((e: any) => e.msg || e.message || e).join(', ');
-              } else if (data.issues && Array.isArray(data.issues)) {
-                message = data.issues.map((e: any) => e.message).join(', ');
-              } else {
-                message = JSON.stringify(data).slice(0, 200);
-              }
-              // --- END FIX ---
-            }
-          }
-
+          console.error('[FE2] - Refresh full error:', error);
+          const message = extractErrorMessage(error, 'Refresh failed. Please try again.');
           set({ error: message, isLoading: false });
           throw error;
         }
@@ -214,19 +201,17 @@ export const useAuthStore = create<AuthState>()(
 
       setTokens: (accessToken: string, refreshToken: string) => {
         set({ accessToken, refreshToken });
-        console.log('[FE1] - Tokens set manually');
       },
 
       clearTokens: () => {
         set({ accessToken: null, refreshToken: null });
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        console.log('[FE1] - Tokens cleared');
       },
 
       setUser: (user: User) => {
         set({ user });
-        console.log('[FE1] - User set manually');
+        console.log('[FE2] - User set manually');
       },
 
       clearError: () => {

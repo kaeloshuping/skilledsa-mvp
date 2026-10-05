@@ -1,10 +1,7 @@
 // src/services/apiClient.ts
 import axios from 'axios';
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { getLogger } from '../utils/logger';
 import { useAuthStore } from '../stores/authStore';
-
-const log = getLogger('apiClient');
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1',
@@ -17,7 +14,7 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor to add Authorization header
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // --- FIX: Get token from the Zustand store instead of localStorage directly ---
+    // --- Get token from the Zustand store instead of localStorage directly ---
     const { accessToken } = useAuthStore.getState();
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -44,10 +41,10 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
-      // --- FIX: Get tokens from the Zustand store ---
+
+      // --- Get tokens from the Zustand store ---
       const { refreshToken, setTokens, clearTokens } = useAuthStore.getState();
-      
+
       if (refreshToken) {
         try {
           const { data } = await axios.post(

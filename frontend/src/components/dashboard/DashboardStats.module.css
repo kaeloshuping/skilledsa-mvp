@@ -1,0 +1,48 @@
+/* src/components/dashboard/DashboardStats.module.css */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-height: 120px;
+  justify-content: center;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.icon {
+  font-size: 28px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.value {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 32px;
+  color: var(--color-primary);
+}
+
+.label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+  font-style: italic;
+}

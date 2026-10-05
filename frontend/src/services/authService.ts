@@ -4,6 +4,12 @@ import { getLogger } from '../utils/logger';
 
 const log = getLogger('authService');
 
+export interface NotificationPreferences {
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+}
+
 export interface SignupData {
   email: string;
   password: string;
@@ -18,6 +24,18 @@ export interface LoginData {
   password: string;
 }
 
+/**
+ * Matches the backend `updateMeSchema` (camelCase fields).
+ */
+export interface UpdateProfileData {
+  fullName?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  travelFeePerKm?: number;
+  notificationPrefs?: NotificationPreferences;
+}
+
 export interface AuthResponse {
   user: {
     id: string;
@@ -25,6 +43,16 @@ export interface AuthResponse {
     full_name: string;
     role: string;
     phone: string | null;
+    address?: string | null;
+    city?: string | null;
+    travel_fee_per_km?: number | null;
+    last_travel_fee_change?: string | null;
+    bank_details?: {
+      bank_name?: string;
+      account_number?: string;
+      branch_code?: string;
+    } | null;
+    notification_preference?: NotificationPreferences | null;
     verification_status: 'pending' | 'verified' | 'rejected';
     is_active: boolean;
     last_login: string | null;
@@ -34,56 +62,45 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
-/**
- * Authentication service for all auth-related API calls.
- */
 export class AuthService {
-  /**
-   * Register a new user.
-   */
   static async signup(data: SignupData): Promise<AuthResponse> {
     log.info('Signup request', { email: data.email, role: data.role });
     const response = await apiClient.post<AuthResponse>('/auth/signup', data);
-    console.log('[FE1] - Signup successful', response.data.user.email);
+    console.log('[FE2] - Signup successful', response.data.user.email);
     return response.data;
   }
 
-  /**
-   * Login user.
-   */
   static async login(data: LoginData): Promise<AuthResponse> {
     log.info('Login request', { email: data.email });
     const response = await apiClient.post<AuthResponse>('/auth/login', data);
-    console.log('[FE1] - Login successful', response.data.user.email);
+    console.log('[FE2] - Login successful', response.data.user.email);
     return response.data;
   }
 
-  /**
-   * Refresh access token using refresh token.
-   */
   static async refresh(refreshToken: string): Promise<AuthResponse> {
     log.info('Refresh token request');
     const response = await apiClient.post<AuthResponse>('/auth/refresh', { refreshToken });
-    console.log('[FE1] - Token refresh successful');
+    console.log('[FE2] - Token refresh successful');
     return response.data;
   }
 
-  /**
-   * Logout – revoke refresh token.
-   */
   static async logout(refreshToken: string): Promise<void> {
     log.info('Logout request');
     await apiClient.post('/auth/logout', { refreshToken });
-    console.log('[FE1] - Logout successful');
+    console.log('[FE2] - Logout successful');
   }
 
-  /**
-   * Get current user info.
-   */
   static async getMe(): Promise<AuthResponse['user']> {
     log.info('Get me request');
     const response = await apiClient.get<{ user: AuthResponse['user'] }>('/auth/me');
-    console.log('[FE1] - Get me successful');
+    console.log('[FE2] - Get me successful');
+    return response.data.user;
+  }
+
+  static async updateProfile(data: UpdateProfileData): Promise<AuthResponse['user']> {
+    log.info('Update profile request', data);
+    const response = await apiClient.put<{ user: AuthResponse['user'] }>('/users/me', data);
+    console.log('[FE2] - Profile updated successfully');
     return response.data.user;
   }
 }

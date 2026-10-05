@@ -1,9 +1,10 @@
 // src/pages/admin/AdminDashboard.tsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AdminService } from '../../services/adminService';
 import type { AdminStats } from '../../services/adminService';
 import { AdminSidebar } from '../../components/admin/AdminSidebar';
+import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import styles from './AdminDashboard.module.css';
 
@@ -11,6 +12,8 @@ export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { showToast } = useToast();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
@@ -26,10 +29,16 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [showToast]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStats();
   }, [fetchStats]);
+
+  const handleLogout = async () => {
+    console.log('[FE2] - Admin logout clicked');
+    await logout();
+    navigate('/login', { replace: true });
+  };
 
   if (isLoading) {
     return (
@@ -48,18 +57,21 @@ export const AdminDashboard: React.FC = () => {
       <div className={styles.content}>
         <header className={styles.header}>
           <h1 className={styles.title}>Admin Dashboard</h1>
-          <button className={styles.refreshButton} onClick={fetchStats}>
-            🔄 Refresh
-          </button>
+          <div className={styles.headerActions}>
+            <button className={styles.refreshButton} onClick={fetchStats}>
+              🔄 Refresh
+            </button>
+            <button className={styles.logoutButton} onClick={handleLogout}>
+              🚪 Logout
+            </button>
+          </div>
         </header>
 
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <span className={styles.statValue}>{stats?.pending ?? 0}</span>
             <span className={styles.statLabel}>Pending Verifications</span>
-            <Link to="/admin/verifications" className={styles.statLink}>
-              View Queue →
-            </Link>
+            <Link to="/admin/verifications" className={styles.statLink}>View Queue →</Link>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statValue}>{stats?.approvedToday ?? 0}</span>

@@ -48,8 +48,13 @@ export const VerificationActions: React.FC<VerificationActionsProps> = ({
       }
       setIsModalOpen(false);
       onActionComplete();
-    } catch (error: any) {
-      const msg = error.response?.data?.message || error.message || 'Action failed';
+    } catch (error: unknown) {
+      // Type-safe error narrowing (OWASP: no `any`)
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const msg = err.response?.data?.message || err.message || 'Action failed';
       showToast(msg, 'error');
     } finally {
       setIsLoading(false);
