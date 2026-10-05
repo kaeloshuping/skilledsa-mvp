@@ -7,10 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// ENUMS
-// ============================================
-
 enum Role {
   customer
   contractor
@@ -35,17 +31,10 @@ enum JobStatus {
   open
   quoted
   accepted
-  milestone1_pending
-  milestone1_verified
-  milestone2_pending
+  active
   completed
-  disputed
   cancelled
 }
-
-// ============================================
-// MODELS
-// ============================================
 
 model User {
   id                      String              @id @default(uuid())
@@ -63,16 +52,11 @@ model User {
   created_at              DateTime            @default(now())
   updated_at              DateTime            @updatedAt
 
-  // --- NEW: Manual location fields (used for city-based filtering) ---
-  address                 String?             // Street address (optional for users)
-  city                    String?             // City name (optional for users)
-  // --------------------------------------------------------------------
-
-  jobs_as_customer        Job[]                      @relation("CustomerJobs")
-  jobs_as_contractor      Job[]                      @relation("ContractorJobs")
-  admin_logs              AdminLog[]                 @relation("AdminLogs")
-  verification_request    VerificationRequest?       @relation("userVerification")
-  reviewed_verifications  VerificationRequest[]      @relation("reviewedBy")
+  jobs_as_customer        Job[]               @relation("CustomerJobs")
+  quotes                  Quote[]
+  admin_logs              AdminLog[]          @relation("AdminLogs")
+  verification_request    VerificationRequest? @relation("userVerification")
+  reviewed_verifications  VerificationRequest[] @relation("reviewedBy")
   refresh_tokens          RefreshToken[]
   file_uploads            FileUpload[]
 
@@ -132,58 +116,64 @@ model FileUpload {
 }
 
 model EscrowTransaction {
-  id                       String          @id @default(uuid())
-  job_id                   String          @unique
+  id                    String          @id @default(uuid())
+  job_id                String          @unique
   stripe_payment_intent_id String?
-  stripe_transfer_id       String?
-  idempotency_key          String?         @unique
-  amount_total             Decimal?        @db.Decimal(10,2)
-  amount_contractor        Decimal?        @db.Decimal(10,2)
-  amount_platform          Decimal?        @db.Decimal(10,2)
-  status                   EscrowStatus    @default(created)
-  admin_clawback_rever     Boolean?
-  created_at               DateTime        @default(now())
+  stripe_transfer_id    String?
+  idempotency_key       String?         @unique
+  amount_total          Decimal?        @db.Decimal(10,2)
+  amount_contractor     Decimal?        @db.Decimal(10,2)
+  amount_platform       Decimal?        @db.Decimal(10,2)
+  status                EscrowStatus    @default(created)
+  admin_clawback_rever  Boolean?
+  created_at            DateTime        @default(now())
 
-  job                      Job             @relation(fields: [job_id], references: [id])
+  job                   Job             @relation(fields: [job_id], references: [id])
 
   @@index([job_id])
 }
 
 model Job {
-  id                    String          @id @default(uuid())
-  customer_id           String
-  contractor_id         String?
-  status                JobStatus       @default(draft)
-  location              String?         // WKT string e.g. "POINT(28.0473 -26.2041)"
-  travel_fee            Decimal?        @db.Decimal(10,2)
-  total_value           Decimal?        @db.Decimal(10,2)
+  id                  String           @id @default(uuid())
+  customerId          String
+  customer            User             @relation("CustomerJobs", fields: [customerId], references: [id])
+  title               String
+  description         String
+  trade               String
+  photos              String[]
+  location            Unsupported("geography(Point, 4326)")?
+  locationLat         Float?
+  locationLng         Float?
+  needsConsultation   Boolean          @default(false)
+  travelFeeAccepted   Boolean          @default(true)
+  status              JobStatus        @default(open)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
-  title                 String          @db.VarChar(255)
-  description           String          @db.Text
-  trade                 String          @db.VarChar(100)
-  photos                Json?           // array of photo URLs
-  locationLat           Float?          // latitude for quick access (optional)
-  locationLng           Float?          // longitude for quick access (optional)
-  needsConsultation     Boolean         @default(false)
-  travelFeeAccepted     Boolean         @default(false)
+  quotes              Quote[]
+  escrow_transaction  EscrowTransaction?
 
-  // --- NEW: Manual location fields (city is required for filtering) ---
-  address               String?         // Street address entered by customer
-  city                  String          // City name (required for city-based filtering)
-  // ------------------------------------------------------------------
-
-  created_at            DateTime        @default(now())
-  updated_at            DateTime        @updatedAt
-
-  customer              User            @relation("CustomerJobs", fields: [customer_id], references: [id])
-  contractor            User?           @relation("ContractorJobs", fields: [contractor_id], references: [id])
-  escrow_transaction    EscrowTransaction?
-
-  @@index([status])
+  @@index([customerId])
   @@index([trade])
-  @@index([city])                      // NEW: fast city filtering
-  @@index([locationLat, locationLng])
-  // GIST index for location is created via raw SQL in migration
+  @@index([status])
+}
+
+model Quote {
+  id            String   @id @default(uuid())
+  jobId         String
+  job           Job      @relation(fields: [jobId], references: [id])
+  contractorId  String
+  contractor    User     @relation(fields: [contractorId], references: [id])
+  price         Float
+  timeline      Int
+  travelFee     Float?
+  totalPrice    Float
+  status        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([jobId])
+  @@index([contractorId])
 }
 
 model AdminLog {
@@ -202,5 +192,4 @@ model AdminLog {
   admin                 User            @relation("AdminLogs", fields: [admin_id], references: [id])
 
   @@index([admin_id])
-  // BRIN index on created_at is added via raw SQL migration
 }
