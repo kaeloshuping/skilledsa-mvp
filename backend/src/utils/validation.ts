@@ -98,37 +98,44 @@ export const createJobSchema = z.object({
   locationLng: z.number().min(-180).max(180, "Longitude must be between -180 and 180"),
   needsConsultation: z.boolean().default(false),
   travelFeeAccepted: z.boolean().default(true),
-  // --- Manual location fields (BE2, Sprint 3) ---
+  // Manual location fields (BE2, Sprint 3)
   city: z.string().min(1, "City is required"),
   address: z.string().optional(),
-  // ----------------------------------------------
 });
 
 /**
  * Schema for updating a job.
- * `.partial()` makes every field optional — including the new `city`/`address`.
+ * `.partial()` makes every field optional — including `city`/`address`.
  */
 export const updateJobSchema = createJobSchema.partial();
 
 /**
- * Valid JobStatus values as defined in the Prisma schema.
+ * BUG-002 FIX: Valid JobStatus values as defined in the CURRENT
+ * Prisma schema. The previous list contained obsolete enum members
+ * (`milestone1_pending`, `milestone1_verified`, `milestone2_pending`,
+ * `disputed`) that were removed by migration 20260820160419_.
+ * Keeping those here caused TS2345 in JobController.listJobs.
  */
 const jobStatusEnum = z.enum([
   "draft",
   "open",
   "quoted",
   "accepted",
-  "milestone1_pending",
-  "milestone1_verified",
-  "milestone2_pending",
+  "active",
   "completed",
-  "disputed",
   "cancelled",
 ]);
 
 /**
  * Schema for listing jobs with query filters.
  * `city` takes precedence over lat/lng/radius.
+ *
+ * BUG-002/BUG-003 notes:
+ *  - `status` no longer defaults to 'open'. The controller now decides
+ *    the effective status per-role (customer → unrestricted; contractor
+ *    → forced to 'open'). Defaulting here was hiding that policy.
+ *  - `limit` added so the client can bound response sizes (bounded at
+ *    50 to prevent enumeration blow-ups).
  */
 export const listJobsQuerySchema = z.object({
   trade: z.string().optional(),
@@ -138,7 +145,8 @@ export const listJobsQuerySchema = z.object({
   lng: z.coerce.number().min(-180).max(180).optional(),
   radius: z.coerce.number().positive().default(35), // in km
   travelFeeAccepted: z.coerce.boolean().optional(),
-  status: jobStatusEnum.optional().default("open"),
+  status: jobStatusEnum.optional(),
+  limit: z.coerce.number().int().positive().max(50).default(20),
 });
 
 // ============================================================

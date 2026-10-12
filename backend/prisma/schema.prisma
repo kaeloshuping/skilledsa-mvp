@@ -49,6 +49,12 @@ model User {
   notification_preference Json?
   popia_consent           Boolean             @default(false)
   data_retention_date     DateTime?
+  // BUG-001 FIX: `address` and `city` were present in the migrations
+  // (add_manual_location_fields) but missing from this schema after a
+  // branch merge. Restored to match migration history.
+  // DO NOT remove without generating a new migration.
+  address                 String?
+  city                    String?
   created_at              DateTime            @default(now())
   updated_at              DateTime            @updatedAt
 
@@ -63,13 +69,13 @@ model User {
   @@index([email])
   @@index([role])
   @@index([verification_status])
-  @@index([city])   // NEW: helps with city-based user lookups
+  @@index([city])
 }
 
 model VerificationRequest {
-  id               String            @id @default(uuid())
-  user_id          String            @unique
-  user             User              @relation("userVerification", fields: [user_id], references: [id])
+  id               String             @id @default(uuid())
+  user_id          String             @unique
+  user             User               @relation("userVerification", fields: [user_id], references: [id])
   role             Role
   id_photo_url     String
   selfie_url       String
@@ -77,10 +83,10 @@ model VerificationRequest {
   status           VerificationStatus @default(pending)
   admin_notes      String?
   admin_id         String?
-  admin            User?             @relation("reviewedBy", fields: [admin_id], references: [id])
+  admin            User?              @relation("reviewedBy", fields: [admin_id], references: [id])
   reviewed_at      DateTime?
-  created_at       DateTime          @default(now())
-  updated_at       DateTime          @updatedAt
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @updatedAt
 
   @@index([status])
   @@index([created_at])
@@ -116,39 +122,59 @@ model FileUpload {
 }
 
 model EscrowTransaction {
-  id                    String          @id @default(uuid())
-  job_id                String          @unique
-  stripe_payment_intent_id String?
-  stripe_transfer_id    String?
-  idempotency_key       String?         @unique
-  amount_total          Decimal?        @db.Decimal(10,2)
-  amount_contractor     Decimal?        @db.Decimal(10,2)
-  amount_platform       Decimal?        @db.Decimal(10,2)
-  status                EscrowStatus    @default(created)
-  admin_clawback_rever  Boolean?
-  created_at            DateTime        @default(now())
+  id                        String       @id @default(uuid())
+  job_id                    String       @unique
+  stripe_payment_intent_id  String?
+  stripe_transfer_id        String?
+  idempotency_key           String?      @unique
+  amount_total              Decimal?     @db.Decimal(10, 2)
+  amount_contractor         Decimal?     @db.Decimal(10, 2)
+  amount_platform           Decimal?     @db.Decimal(10, 2)
+  status                    EscrowStatus @default(created)
+  admin_clawback_rever      Boolean?
+  created_at                DateTime     @default(now())
 
-  job                   Job             @relation(fields: [job_id], references: [id])
+  job                       Job          @relation(fields: [job_id], references: [id])
 
   @@index([job_id])
 }
 
 model Job {
-  id                  String           @id @default(uuid())
+  id                  String                              @id @default(uuid())
   customerId          String
-  customer            User             @relation("CustomerJobs", fields: [customerId], references: [id])
+  customer            User                                @relation("CustomerJobs", fields: [customerId], references: [id])
   title               String
   description         String
   trade               String
   photos              String[]
+  // ─────────────────────────────────────────────────────────────
+  // NOTE ON `location`:
+  //   This is an `Unsupported("geography(Point, 4326)")` column.
+  //   Prisma cannot express GIST indexes on Unsupported fields in
+  //   schema language, so the mandatory index `idx_job_location`
+  //   (TDD §3.3) is created via raw SQL in migration
+  //   `20260820153105_add_jobs_quotes`.
+  //
+  //   DO NOT let `prisma migrate dev` generate a migration that drops
+  //   this index. If Prisma prompts you to reconcile drift here,
+  //   cancel the prompt — the drift is intentional and required.
+  //
+  //   All writes to `location` go through `$executeRaw` in
+  //   `jobService.createJob` and `jobService.updateJob`.
+  // ─────────────────────────────────────────────────────────────
   location            Unsupported("geography(Point, 4326)")?
   locationLat         Float?
   locationLng         Float?
-  needsConsultation   Boolean          @default(false)
-  travelFeeAccepted   Boolean          @default(true)
-  status              JobStatus        @default(open)
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  needsConsultation   Boolean                             @default(false)
+  travelFeeAccepted   Boolean                             @default(true)
+  // BUG-001 FIX: `address` and `city` restored to match
+  // the add_manual_location_fields migration.
+  // `city` MUST remain required to match the migration's NOT NULL.
+  address             String?
+  city                String
+  status              JobStatus                           @default(open)
+  createdAt           DateTime                            @default(now())
+  updatedAt           DateTime                            @updatedAt
 
   quotes              Quote[]
   escrow_transaction  EscrowTransaction?
@@ -156,6 +182,7 @@ model Job {
   @@index([customerId])
   @@index([trade])
   @@index([status])
+  @@index([city])
 }
 
 model Quote {
@@ -177,19 +204,19 @@ model Quote {
 }
 
 model AdminLog {
-  id                    String          @id @default(uuid())
-  request_id            String          @db.Uuid
-  admin_id              String
-  action                String
-  target_type           String
-  target_id             String
-  before_state          Json?
-  after_state           Json?
-  ip_address            String?
-  user_agent            String?
-  created_at            DateTime        @default(now())
+  id            String   @id @default(uuid())
+  request_id    String   @db.Uuid
+  admin_id      String
+  action        String
+  target_type   String
+  target_id     String
+  before_state  Json?
+  after_state   Json?
+  ip_address    String?
+  user_agent    String?
+  created_at    DateTime @default(now())
 
-  admin                 User            @relation("AdminLogs", fields: [admin_id], references: [id])
+  admin         User     @relation("AdminLogs", fields: [admin_id], references: [id])
 
   @@index([admin_id])
 }
