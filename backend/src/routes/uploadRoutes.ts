@@ -10,13 +10,14 @@ import { env } from '../config/env.js';
 
 const router = Router();
 
-// Uploads live under the backend project root: <backend>/uploads/
+// Uploads live under the backend project root: <backend>/uploads/.
 const UPLOAD_ROOT = path.resolve(process.cwd(), 'uploads');
 const ALLOWED_MIME = ['image/jpeg', 'image/png'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 
 /**
  * Sanitise the category string to prevent path traversal.
+ * Falls back to 'misc' when absent or empty.
  */
 const sanitiseCategory = (raw: unknown): string => {
   const value = typeof raw === 'string' && raw.length > 0 ? raw : 'misc';
@@ -78,7 +79,12 @@ router.post('/', (req, res) => {
 
     const category = sanitiseCategory((req.body as { category?: string })?.category);
     const relativePath = `${category}/${req.file.filename}`;
-    const url = `${env.API_URL}/uploads/${relativePath}`;
+
+    // Static file mount in index.ts is at '/uploads'. Build the public URL
+    // from the API host only (strip any /api/vN path prefix from API_URL)
+    // so it matches the mount and the file is fetchable by the browser.
+    const apiOrigin = new URL(env.API_URL).origin;
+    const url = `${apiOrigin}/uploads/${relativePath}`;
 
     log.info('[BE1] - Local file uploaded', {
       key: relativePath,
