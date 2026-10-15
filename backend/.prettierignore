@@ -1,0 +1,15 @@
+# Build output
+dist
+
+# Dependencies
+node_modules
+
+# Generated Prisma files (matches backend ESLint ignorePatterns)
+prisma
+
+# Docs and lockfile
+*.md
+package-lock.json
+
+# Uploads directory (user content, not source)
+uploads
