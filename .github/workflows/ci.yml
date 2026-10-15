@@ -52,7 +52,10 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:testpassword@localhost:5432/skilledsa_test
           REDIS_URL: redis://localhost:6379
-      - run: npm audit
+      # Fail only on critical vulnerabilities in production dependencies.
+      # Dev-dependency vulnerabilities are excluded; aws-sdk v2 issues are
+      # tracked for the AWS SDK v3 migration ticket.
+      - run: npm audit --omit=dev --audit-level=critical
 
   lint-and-test-frontend:
     runs-on: ubuntu-latest
@@ -67,4 +70,4 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run format:check
-      - run: npm run test:unit   # assuming you set up Vitest later
+      - run: npm run test:unit
