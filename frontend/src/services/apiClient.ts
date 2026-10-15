@@ -31,7 +31,7 @@ apiClient.interceptors.request.use(
   (error) => {
     console.error('[FE1] - API Request Error:', error);
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor to handle token refresh (simplified)
@@ -47,10 +47,9 @@ apiClient.interceptors.response.use(
 
       if (refreshToken) {
         try {
-          const { data } = await axios.post(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
-            { refreshToken }
-          );
+          const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/refresh`, {
+            refreshToken,
+          });
           // Update the store with new tokens
           setTokens(data.accessToken, data.refreshToken);
           // Also update the request headers
@@ -70,7 +69,7 @@ apiClient.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

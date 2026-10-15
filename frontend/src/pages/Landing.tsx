@@ -33,8 +33,8 @@ export const Landing: React.FC = () => {
             <span className={styles.highlight}>in South Africa</span>
           </h1>
           <p className={styles.subtitle}>
-            Connect with verified plumbers, electricians, builders, and more.
-            Safe, secure, and hassle-free.
+            Connect with verified plumbers, electricians, builders, and more. Safe, secure, and
+            hassle-free.
           </p>
           <div className={styles.ctaGroup}>
             <Link to="/signup" className={`${styles.primaryButton} ${styles.ctaButton}`}>
@@ -47,7 +47,9 @@ export const Landing: React.FC = () => {
         </div>
         <div className={styles.heroImage}>
           <div className={styles.imagePlaceholder}>
-            <span role="img" aria-label="Construction tools">🔧⚡🛠️</span>
+            <span role="img" aria-label="Construction tools">
+              🔧⚡🛠️
+            </span>
           </div>
         </div>
       </section>

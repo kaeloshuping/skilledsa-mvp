@@ -91,7 +91,9 @@
   font-weight: 500;
   font-size: 16px;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.1s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.1s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -114,7 +116,9 @@
   font-weight: 500;
   font-size: 16px;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;

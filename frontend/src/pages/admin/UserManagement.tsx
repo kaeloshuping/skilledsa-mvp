@@ -99,9 +99,12 @@ export const UserManagement: React.FC = () => {
 
   const statusBadgeClass = (status: AdminUser['verification_status']) => {
     switch (status) {
-      case 'verified': return styles.badgeVerified;
-      case 'rejected': return styles.badgeRejected;
-      default: return styles.badgePending;
+      case 'verified':
+        return styles.badgeVerified;
+      case 'rejected':
+        return styles.badgeRejected;
+      default:
+        return styles.badgePending;
     }
   };
 
@@ -130,7 +133,12 @@ export const UserManagement: React.FC = () => {
           </div>
           <div className={styles.filterGroup}>
             <label htmlFor="roleFilter">Role:</label>
-            <select id="roleFilter" value={roleFilter} onChange={handleRoleChange} className={styles.select}>
+            <select
+              id="roleFilter"
+              value={roleFilter}
+              onChange={handleRoleChange}
+              className={styles.select}
+            >
               <option value="all">All</option>
               <option value="customer">Customer</option>
               <option value="contractor">Contractor</option>
@@ -139,7 +147,12 @@ export const UserManagement: React.FC = () => {
           </div>
           <div className={styles.filterGroup}>
             <label htmlFor="statusFilter">Verification:</label>
-            <select id="statusFilter" value={statusFilter} onChange={handleStatusChange} className={styles.select}>
+            <select
+              id="statusFilter"
+              value={statusFilter}
+              onChange={handleStatusChange}
+              className={styles.select}
+            >
               <option value="all">All</option>
               <option value="pending">Pending</option>
               <option value="verified">Verified</option>
@@ -173,7 +186,9 @@ export const UserManagement: React.FC = () => {
                     <td>{u.email}</td>
                     <td className={styles.capitalize}>{u.role}</td>
                     <td>
-                      <span className={`${styles.badge} ${statusBadgeClass(u.verification_status)}`}>
+                      <span
+                        className={`${styles.badge} ${statusBadgeClass(u.verification_status)}`}
+                      >
                         {u.verification_status}
                       </span>
                     </td>
@@ -195,7 +210,9 @@ export const UserManagement: React.FC = () => {
             >
               ← Prev
             </button>
-            <span className={styles.pageInfo}>Page {page} of {totalPages}</span>
+            <span className={styles.pageInfo}>
+              Page {page} of {totalPages}
+            </span>
             <button
               className={styles.pageButton}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -210,15 +227,35 @@ export const UserManagement: React.FC = () => {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="User Details">
         {selectedUser && (
           <div className={styles.modalBody}>
-            <div className={styles.detailRow}><span>Name:</span><strong>{selectedUser.full_name}</strong></div>
-            <div className={styles.detailRow}><span>Email:</span><strong>{selectedUser.email}</strong></div>
-            <div className={styles.detailRow}><span>Role:</span><strong className={styles.capitalize}>{selectedUser.role}</strong></div>
-            <div className={styles.detailRow}><span>Phone:</span><strong>{selectedUser.phone || '—'}</strong></div>
-            <div className={styles.detailRow}><span>Address:</span><strong>{selectedUser.address || '—'}</strong></div>
-            <div className={styles.detailRow}><span>City:</span><strong>{selectedUser.city || '—'}</strong></div>
+            <div className={styles.detailRow}>
+              <span>Name:</span>
+              <strong>{selectedUser.full_name}</strong>
+            </div>
+            <div className={styles.detailRow}>
+              <span>Email:</span>
+              <strong>{selectedUser.email}</strong>
+            </div>
+            <div className={styles.detailRow}>
+              <span>Role:</span>
+              <strong className={styles.capitalize}>{selectedUser.role}</strong>
+            </div>
+            <div className={styles.detailRow}>
+              <span>Phone:</span>
+              <strong>{selectedUser.phone || '—'}</strong>
+            </div>
+            <div className={styles.detailRow}>
+              <span>Address:</span>
+              <strong>{selectedUser.address || '—'}</strong>
+            </div>
+            <div className={styles.detailRow}>
+              <span>City:</span>
+              <strong>{selectedUser.city || '—'}</strong>
+            </div>
             <div className={styles.detailRow}>
               <span>Verification:</span>
-              <span className={`${styles.badge} ${statusBadgeClass(selectedUser.verification_status)}`}>
+              <span
+                className={`${styles.badge} ${statusBadgeClass(selectedUser.verification_status)}`}
+              >
                 {selectedUser.verification_status}
               </span>
             </div>
@@ -228,7 +265,9 @@ export const UserManagement: React.FC = () => {
             </div>
 
             <div className={styles.modalActions}>
-              <button className={styles.cancelButton} onClick={() => setIsModalOpen(false)}>Close</button>
+              <button className={styles.cancelButton} onClick={() => setIsModalOpen(false)}>
+                Close
+              </button>
               {selectedUser.verification_status !== 'verified' && (
                 <button
                   className={styles.verifyButton}

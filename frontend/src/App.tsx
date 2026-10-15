@@ -64,7 +64,9 @@ function App() {
           <Route path="/contractor/profile" element={<ContractorProfile />} />
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={['contractor', 'admin']} requireVerification />}>
+        <Route
+          element={<ProtectedRoute allowedRoles={['contractor', 'admin']} requireVerification />}
+        >
           <Route path="/contractor/jobs" element={<BrowseJobs />} />
           <Route path="/contractor/jobs/:id" element={<JobDetail />} />
         </Route>

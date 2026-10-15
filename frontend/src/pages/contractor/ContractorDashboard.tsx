@@ -15,7 +15,11 @@ export const ContractorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const [stats, setStats] = useState<{ available: number; active: number; completed: number } | null>(null);
+  const [stats, setStats] = useState<{
+    available: number;
+    active: number;
+    completed: number;
+  } | null>(null);
   const [recommendedJobs, setRecommendedJobs] = useState<ContractorJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

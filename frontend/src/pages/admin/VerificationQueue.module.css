@@ -87,7 +87,8 @@
   border-radius: var(--radius-pill);
 }
 
-.loading, .empty {
+.loading,
+.empty {
   display: flex;
   align-items: center;
   justify-content: center;

@@ -57,9 +57,7 @@ export const ForgotPassword: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.title}>Reset Password</h1>
-        <p className={styles.subtitle}>
-          Enter your email and we'll send you a reset link.
-        </p>
+        <p className={styles.subtitle}>Enter your email and we'll send you a reset link.</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
@@ -77,11 +75,7 @@ export const ForgotPassword: React.FC = () => {
 
           {error && <div className={styles.errorMessage}>{error}</div>}
 
-          <button
-            type="submit"
-            className={styles.primaryButton}
-            disabled={isLoading}
-          >
+          <button type="submit" className={styles.primaryButton} disabled={isLoading}>
             {isLoading ? 'Sending...' : 'Send Reset Link'}
           </button>
 

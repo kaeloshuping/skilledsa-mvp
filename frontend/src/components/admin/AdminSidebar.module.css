@@ -51,7 +51,9 @@
   color: var(--color-text-secondary);
   text-decoration: none;
   font-weight: 500;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .link:hover {

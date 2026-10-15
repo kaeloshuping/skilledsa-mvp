@@ -13,25 +13,19 @@ export const AdminSidebar: React.FC = () => {
       <nav className={styles.nav}>
         <NavLink
           to="/admin/dashboard"
-          className={({ isActive }) =>
-            isActive ? `${styles.link} ${styles.active}` : styles.link
-          }
+          className={({ isActive }) => (isActive ? `${styles.link} ${styles.active}` : styles.link)}
         >
           📊 Dashboard
         </NavLink>
         <NavLink
           to="/admin/verifications"
-          className={({ isActive }) =>
-            isActive ? `${styles.link} ${styles.active}` : styles.link
-          }
+          className={({ isActive }) => (isActive ? `${styles.link} ${styles.active}` : styles.link)}
         >
           ✅ Verification Queue
         </NavLink>
         <NavLink
           to="/admin/users"
-          className={({ isActive }) =>
-            isActive ? `${styles.link} ${styles.active}` : styles.link
-          }
+          className={({ isActive }) => (isActive ? `${styles.link} ${styles.active}` : styles.link)}
         >
           👥 User Management
         </NavLink>

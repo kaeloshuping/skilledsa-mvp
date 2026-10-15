@@ -119,8 +119,8 @@ export const VerificationActions: React.FC<VerificationActionsProps> = ({
               {isLoading
                 ? 'Processing...'
                 : actionType === 'approve'
-                ? 'Yes, Approve'
-                : 'Yes, Reject'}
+                  ? 'Yes, Approve'
+                  : 'Yes, Reject'}
             </button>
           </div>
         </div>

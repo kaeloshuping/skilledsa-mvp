@@ -8,7 +8,14 @@ import { Toggle } from '../../components/common/Toggle';
 import { useToast } from '../../stores/toastStore';
 import styles from './PostJob.module.css';
 
-const trades = ['Plumbing', 'Electrical', 'Building/Tiling', 'Painting', 'Carpentry', 'Appliance Repair'];
+const trades = [
+  'Plumbing',
+  'Electrical',
+  'Building/Tiling',
+  'Painting',
+  'Carpentry',
+  'Appliance Repair',
+];
 const CITIES = ['Johannesburg', 'Pretoria', 'Cape Town', 'Durban', 'Port Elizabeth'];
 
 export const PostJob: React.FC = () => {
@@ -45,7 +52,9 @@ export const PostJob: React.FC = () => {
 
     // Verification check
     if (!isVerified) {
-      setError('You must verify your account before posting a job. Please click "Verify Now" above.');
+      setError(
+        'You must verify your account before posting a job. Please click "Verify Now" above.',
+      );
       return;
     }
 
@@ -70,7 +79,7 @@ export const PostJob: React.FC = () => {
       setError('Please select a city');
       return;
     }
-    const uploadedPhotos = photos.filter(p => p.status === 'done' && p.url);
+    const uploadedPhotos = photos.filter((p) => p.status === 'done' && p.url);
     if (uploadedPhotos.length === 0) {
       setError('Please upload at least one photo');
       return;
@@ -79,7 +88,7 @@ export const PostJob: React.FC = () => {
     setLoading(true);
 
     try {
-      const photoUrls = uploadedPhotos.map(p => p.url as string);
+      const photoUrls = uploadedPhotos.map((p) => p.url as string);
       await JobService.createJob({
         title: title.trim(),
         description: description.trim(),
@@ -100,7 +109,12 @@ export const PostJob: React.FC = () => {
         const response = err.response;
         if (response && typeof response === 'object' && 'data' in response) {
           const data = response.data;
-          if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
+          if (
+            data &&
+            typeof data === 'object' &&
+            'message' in data &&
+            typeof data.message === 'string'
+          ) {
             message = data.message;
           }
         }
@@ -117,7 +131,9 @@ export const PostJob: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.title}>Post a Job</h1>
-        <p className={styles.subtitle}>Tell us what you need, and get quotes from trusted contractors.</p>
+        <p className={styles.subtitle}>
+          Tell us what you need, and get quotes from trusted contractors.
+        </p>
 
         {!isVerified && (
           <div className={styles.verificationWarning}>
@@ -167,7 +183,9 @@ export const PostJob: React.FC = () => {
               disabled={loading}
             >
               {trades.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
             </select>
           </div>
@@ -206,7 +224,9 @@ export const PostJob: React.FC = () => {
               disabled={loading}
             >
               {CITIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </select>
           </div>
@@ -231,15 +251,9 @@ export const PostJob: React.FC = () => {
             />
           </div>
 
-          {error && (
-            <div className={styles.errorMessage}>{error}</div>
-          )}
+          {error && <div className={styles.errorMessage}>{error}</div>}
 
-          <button
-            type="submit"
-            className={styles.primaryButton}
-            disabled={loading || !isVerified}
-          >
+          <button type="submit" className={styles.primaryButton} disabled={loading || !isVerified}>
             {loading ? 'Creating job...' : 'Post Job'}
           </button>
         </form>

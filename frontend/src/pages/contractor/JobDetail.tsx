@@ -54,11 +54,16 @@ export const JobDetail: React.FC = () => {
 
   const statusBadgeClass = (() => {
     switch (job.status) {
-      case 'open': return styles.badgeOpen;
-      case 'accepted': return styles.badgeAccepted;
-      case 'completed': return styles.badgeCompleted;
-      case 'disputed': return styles.badgeDisputed;
-      default: return styles.badgeDefault;
+      case 'open':
+        return styles.badgeOpen;
+      case 'accepted':
+        return styles.badgeAccepted;
+      case 'completed':
+        return styles.badgeCompleted;
+      case 'disputed':
+        return styles.badgeDisputed;
+      default:
+        return styles.badgeDefault;
     }
   })();
 
@@ -114,7 +119,9 @@ export const JobDetail: React.FC = () => {
           <div className={styles.location}>
             <h3>Location</h3>
             <p>{job.address}</p>
-            <p><strong>Travel fee accepted:</strong> {job.travelFeeAccepted ? 'Yes' : 'No'}</p>
+            <p>
+              <strong>Travel fee accepted:</strong> {job.travelFeeAccepted ? 'Yes' : 'No'}
+            </p>
           </div>
         )}
 

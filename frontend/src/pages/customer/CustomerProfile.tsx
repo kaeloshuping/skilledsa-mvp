@@ -9,13 +9,7 @@ import { Toggle } from '../../components/common/Toggle';
 import { useToast } from '../../stores/toastStore';
 import styles from './CustomerProfile.module.css';
 
-const CITIES = [
-  'Johannesburg',
-  'Pretoria',
-  'Cape Town',
-  'Durban',
-  'Port Elizabeth',
-];
+const CITIES = ['Johannesburg', 'Pretoria', 'Cape Town', 'Durban', 'Port Elizabeth'];
 
 export const CustomerProfile: React.FC = () => {
   const { user } = useAuth();
@@ -28,7 +22,7 @@ export const CustomerProfile: React.FC = () => {
   const [address, setAddress] = useState(user?.address || '');
   const [city, setCity] = useState(user?.city || 'Johannesburg');
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(
-    user?.notification_preference || { email: true, sms: false, push: false }
+    user?.notification_preference || { email: true, sms: false, push: false },
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -139,7 +133,9 @@ export const CustomerProfile: React.FC = () => {
               disabled={loading}
             >
               {CITIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </select>
           </div>
@@ -170,11 +166,7 @@ export const CustomerProfile: React.FC = () => {
 
           {error && <div className={styles.errorMessage}>{error}</div>}
 
-          <button
-            type="submit"
-            className={styles.primaryButton}
-            disabled={loading}
-          >
+          <button type="submit" className={styles.primaryButton} disabled={loading}>
             {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </form>

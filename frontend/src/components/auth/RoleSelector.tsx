@@ -41,7 +41,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
   error,
   allowedRoles = ['customer', 'contractor', 'admin'], // default all
 }) => {
-  const roles = allRoles.filter(role => allowedRoles.includes(role.value));
+  const roles = allRoles.filter((role) => allowedRoles.includes(role.value));
   console.log('[FE1] - RoleSelector rendered', { selectedRole, allowedRoles });
 
   return (
