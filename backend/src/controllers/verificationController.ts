@@ -2,10 +2,7 @@ import { Request, Response } from 'express';
 import { S3Service } from '../services/s3Service.js';
 import { VerificationService } from '../services/verificationService.js';
 import { getLogger } from '../utils/logger.js';
-import {
-  verificationSubmitSchema,
-  verificationReviewSchema,
-} from '../utils/validation.js';
+import { verificationSubmitSchema, verificationReviewSchema } from '../utils/validation.js';
 import { ZodError } from 'zod';
 import { RequestWithId } from '../middleware/requestTracing.js';
 

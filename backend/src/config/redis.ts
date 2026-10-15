@@ -32,7 +32,7 @@ export async function getCached<T>(key: string): Promise<T | null> {
 export async function setCached(
   key: string,
   value: unknown,
-  ttlSeconds: number = 60
+  ttlSeconds: number = 60,
 ): Promise<void> {
   const serialized = JSON.stringify(value);
   if (ttlSeconds > 0) {

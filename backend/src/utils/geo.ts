@@ -15,11 +15,7 @@ import { Prisma } from '@prisma/client';
  *     where: { ...where },
  *   });
  */
-export function buildDistanceFilter(
-  lat: number,
-  lng: number,
-  radiusKm: number
-): Prisma.Sql {
+export function buildDistanceFilter(lat: number, lng: number, radiusKm: number): Prisma.Sql {
   const radiusMeters = radiusKm * 1000;
   // Use ST_SetSRID and ST_MakePoint to create a geography point.
   // Note: PostGIS expects longitude first, then latitude.
@@ -35,10 +31,7 @@ export function buildDistanceFilter(
 /**
  * Alternative: if you need to order by distance, you can build a similar expression.
  */
-export function buildDistanceOrderBy(
-  lat: number,
-  lng: number
-): Prisma.Sql {
+export function buildDistanceOrderBy(lat: number, lng: number): Prisma.Sql {
   return Prisma.sql`
     ST_Distance(
       "location",

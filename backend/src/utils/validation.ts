@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Zod schemas for request validation.
@@ -7,28 +7,28 @@ import { z } from "zod";
 // Password: min 8 chars, at least one uppercase and one number
 const passwordSchema = z
   .string()
-  .min(8, "Password must be at least 8 characters")
-  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-  .regex(/[0-9]/, "Password must contain at least one number");
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number');
 
 export const signupSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email('Invalid email address'),
   password: passwordSchema,
-  full_name: z.string().min(1, "Full name is required"),
-  role: z.enum(["customer", "contractor", "admin"]),
+  full_name: z.string().min(1, 'Full name is required'),
+  role: z.enum(['customer', 'contractor', 'admin']),
   phone: z.string().optional(),
   popia_consent: z.boolean().refine((val) => val === true, {
-    message: "You must consent to POPIA",
+    message: 'You must consent to POPIA',
   }),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, "Refresh token is required"),
+  refreshToken: z.string().min(1, 'Refresh token is required'),
 });
 
 /**
@@ -90,16 +90,16 @@ export const verificationReviewSchema = z.object({
  * migration). `address` is optional.
  */
 export const createJobSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  trade: z.string().min(1, "Trade is required"),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  trade: z.string().min(1, 'Trade is required'),
   photos: z.array(z.string().url()).optional().default([]),
-  locationLat: z.number().min(-90).max(90, "Latitude must be between -90 and 90"),
-  locationLng: z.number().min(-180).max(180, "Longitude must be between -180 and 180"),
+  locationLat: z.number().min(-90).max(90, 'Latitude must be between -90 and 90'),
+  locationLng: z.number().min(-180).max(180, 'Longitude must be between -180 and 180'),
   needsConsultation: z.boolean().default(false),
   travelFeeAccepted: z.boolean().default(true),
   // Manual location fields (BE2, Sprint 3)
-  city: z.string().min(1, "City is required"),
+  city: z.string().min(1, 'City is required'),
   address: z.string().optional(),
 });
 
@@ -117,13 +117,13 @@ export const updateJobSchema = createJobSchema.partial();
  * Keeping those here caused TS2345 in JobController.listJobs.
  */
 const jobStatusEnum = z.enum([
-  "draft",
-  "open",
-  "quoted",
-  "accepted",
-  "active",
-  "completed",
-  "cancelled",
+  'draft',
+  'open',
+  'quoted',
+  'accepted',
+  'active',
+  'completed',
+  'cancelled',
 ]);
 
 /**
@@ -159,9 +159,7 @@ export const listJobsQuerySchema = z.object({
 export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
-  role: z.enum(["customer", "contractor", "admin"]).optional(),
-  verificationStatus: z
-    .enum(["pending", "verified", "rejected"])
-    .optional(),
+  role: z.enum(['customer', 'contractor', 'admin']).optional(),
+  verificationStatus: z.enum(['pending', 'verified', 'rejected']).optional(),
   search: z.string().optional(),
 });

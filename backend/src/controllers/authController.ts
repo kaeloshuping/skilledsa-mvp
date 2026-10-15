@@ -1,18 +1,10 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/authService.js';
 import { getLogger } from '../utils/logger.js';
-import {
-  signupSchema,
-  loginSchema,
-  refreshTokenSchema,
-} from '../utils/validation.js';
+import { signupSchema, loginSchema, refreshTokenSchema } from '../utils/validation.js';
 import { ZodError } from 'zod';
 import { RequestWithId } from '../middleware/requestTracing.js';
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  hashRefreshToken,
-} from '../utils/jwt.js';
+import { generateAccessToken, generateRefreshToken, hashRefreshToken } from '../utils/jwt.js';
 import prisma from '../config/database.js';
 
 export class AuthController {

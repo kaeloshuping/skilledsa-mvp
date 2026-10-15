@@ -1,11 +1,7 @@
 import { Request, Response } from 'express';
 import { JobService } from '../services/jobService.js';
 import { getLogger } from '../utils/logger.js';
-import {
-  createJobSchema,
-  updateJobSchema,
-  listJobsQuerySchema,
-} from '../utils/validation.js';
+import { createJobSchema, updateJobSchema, listJobsQuerySchema } from '../utils/validation.js';
 import { ZodError } from 'zod';
 import { RequestWithId } from '../middleware/requestTracing.js';
 
