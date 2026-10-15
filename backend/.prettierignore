@@ -4,8 +4,8 @@ dist
 # Dependencies
 node_modules
 
-# Generated Prisma files (matches backend ESLint ignorePatterns)
-prisma
+# Prisma migration SQL (generated)
+prisma/migrations
 
 # Docs and lockfile
 *.md
