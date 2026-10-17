@@ -17,13 +17,12 @@ jobs:
         working-directory: backend
     services:
       postgres:
-        image: postgres:15
+        # PostGIS-enabled image — the plain 'postgres:15' image lacks the
+        # postgis extension required by the initial migration.
+        image: postgis/postgis:15-3.4
         env:
           POSTGRES_PASSWORD: testpassword
           POSTGRES_DB: skilledsa_test
-        # Publish Postgres to the host so 'localhost:5432' is reachable
-        # from the job steps. Without 'ports:', Docker assigns a random
-        # host port and 'prisma migrate deploy' fails with P1001.
         ports:
           - 5432:5432
         options: >-
@@ -33,8 +32,6 @@ jobs:
           --health-retries 5
       redis:
         image: redis:7
-        # Same reasoning as Postgres above: expose 6379 on the host so
-        # REDIS_URL=redis://localhost:6379 works in the test steps.
         ports:
           - 6379:6379
         options: >-
