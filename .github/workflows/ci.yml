@@ -21,6 +21,11 @@ jobs:
         env:
           POSTGRES_PASSWORD: testpassword
           POSTGRES_DB: skilledsa_test
+        # Publish Postgres to the host so 'localhost:5432' is reachable
+        # from the job steps. Without 'ports:', Docker assigns a random
+        # host port and 'prisma migrate deploy' fails with P1001.
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -28,6 +33,10 @@ jobs:
           --health-retries 5
       redis:
         image: redis:7
+        # Same reasoning as Postgres above: expose 6379 on the host so
+        # REDIS_URL=redis://localhost:6379 works in the test steps.
+        ports:
+          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -53,8 +62,8 @@ jobs:
           DATABASE_URL: postgresql://postgres:testpassword@localhost:5432/skilledsa_test
           REDIS_URL: redis://localhost:6379
       # Fail only on critical vulnerabilities in production dependencies.
-      # Dev-dependency vulnerabilities are excluded; aws-sdk v2 issues are
-      # tracked for the AWS SDK v3 migration ticket.
+      # Dev-dependency vulnerabilities are excluded; aws-sdk v2 findings
+      # are tracked for the AWS SDK v3 migration ticket.
       - run: npm audit --omit=dev --audit-level=critical
 
   lint-and-test-frontend:
