@@ -12,6 +12,14 @@
   },
   "plugins": ["@typescript-eslint"],
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
-  "ignorePatterns": ["dist/", "node_modules/", "prisma/"],
+  "ignorePatterns": [
+    "dist/",
+    "node_modules/",
+    "coverage/",
+    "prisma/",
+    "*.config.js",
+    "*.config.cjs",
+    "*.config.mjs"
+  ],
   "rules": {}
 }

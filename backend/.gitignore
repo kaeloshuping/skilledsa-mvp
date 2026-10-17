@@ -4,3 +4,6 @@ node_modules
 ./keys/
 *.pem
 uploads/
+
+# Test coverage output
+coverage/
