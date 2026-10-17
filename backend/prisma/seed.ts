@@ -39,8 +39,8 @@ async function main() {
       full_name: 'Test Customer',
       phone: '+27821234567',
       popia_consent: true,
-      city: "Johannesburg",
-      address: "10 Sandton Drive, Sandton, Johannesburg",
+      city: 'Johannesburg',
+      address: '10 Sandton Drive, Sandton, Johannesburg',
     },
   });
 
@@ -54,8 +54,8 @@ async function main() {
       full_name: 'Test Contractor',
       phone: '+27827654321',
       popia_consent: true,
-      city: "Pretoria",
-      address: "25 Church Street, Pretoria",
+      city: 'Pretoria',
+      address: '25 Church Street, Pretoria',
     },
   });
 
@@ -107,8 +107,8 @@ async function main() {
       description: 'Interior painting of two rooms. Need quotes for labour and materials.',
       trade: 'Painting',
       photos: ['https://example.com/photo3.jpg'],
-      locationLat: -26.2100,
-      locationLng: 28.0400,
+      locationLat: -26.21,
+      locationLng: 28.04,
       needsConsultation: false,
       travelFeeAccepted: true,
       status: JobStatus.open,
@@ -120,7 +120,7 @@ async function main() {
       trade: 'Carpentry',
       photos: ['https://example.com/photo4.jpg'],
       locationLat: -26.2175,
-      locationLng: 28.0350,
+      locationLng: 28.035,
       needsConsultation: true,
       travelFeeAccepted: true,
       status: JobStatus.open,
@@ -131,8 +131,8 @@ async function main() {
       description: 'Floor and wall tiling for a standard bathroom.',
       trade: 'Tiling',
       photos: ['https://example.com/photo5.jpg'],
-      locationLat: -26.1950,
-      locationLng: 28.0500,
+      locationLat: -26.195,
+      locationLng: 28.05,
       needsConsultation: false,
       travelFeeAccepted: false,
       status: JobStatus.open,
@@ -143,9 +143,8 @@ async function main() {
     // Use raw Prisma to insert with geography point
     const { locationLat, locationLng, ...rest } = jobData;
     // Build geography point from lat/lng
-    const location = locationLat && locationLng
-      ? `SRID=4326;POINT(${locationLng} ${locationLat})`
-      : null;
+    const location =
+      locationLat && locationLng ? `SRID=4326;POINT(${locationLng} ${locationLat})` : null;
 
     await prisma.$executeRaw`
       INSERT INTO "Job" (

@@ -7,7 +7,6 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": "./tsconfig.json",
-    "tsconfigRootDir": "/home/elliot_alderson/projects/skilledsa-mvp/backend",
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
