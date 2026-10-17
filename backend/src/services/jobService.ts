@@ -120,8 +120,7 @@ export class JobService {
     let filteredIds: string[] | null = null;
 
     if (!city && lat !== undefined && lng !== undefined) {
-      const effectiveRadius =
-        travelFeeAccepted === false ? Math.min(radius, 35) : radius;
+      const effectiveRadius = travelFeeAccepted === false ? Math.min(radius, 35) : radius;
 
       // Raw SQL: `status` is cast only when provided; otherwise omitted.
       const result = await prisma.$queryRaw<{ id: string }[]>`

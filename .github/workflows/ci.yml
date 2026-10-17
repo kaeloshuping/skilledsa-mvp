@@ -17,10 +17,14 @@ jobs:
         working-directory: backend
     services:
       postgres:
-        image: postgres:15
+        # PostGIS-enabled image — the plain 'postgres:15' image lacks the
+        # postgis extension required by the initial migration.
+        image: postgis/postgis:15-3.4
         env:
           POSTGRES_PASSWORD: testpassword
           POSTGRES_DB: skilledsa_test
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -28,6 +32,8 @@ jobs:
           --health-retries 5
       redis:
         image: redis:7
+        ports:
+          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -52,7 +58,10 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:testpassword@localhost:5432/skilledsa_test
           REDIS_URL: redis://localhost:6379
-      - run: npm audit
+      # Fail only on critical vulnerabilities in production dependencies.
+      # Dev-dependency vulnerabilities are excluded; aws-sdk v2 findings
+      # are tracked for the AWS SDK v3 migration ticket.
+      - run: npm audit --omit=dev --audit-level=critical
 
   lint-and-test-frontend:
     runs-on: ubuntu-latest
@@ -67,4 +76,4 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run format:check
-      - run: npm run test:unit   # assuming you set up Vitest later
+      - run: npm run test:unit

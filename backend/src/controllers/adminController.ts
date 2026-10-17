@@ -46,11 +46,7 @@ export class AdminController {
 
       const { id } = req.params;
 
-      const user = await UserService.setVerificationStatus(
-        id,
-        'verified',
-        req.user.user_id,
-      );
+      const user = await UserService.setVerificationStatus(id, 'verified', req.user.user_id);
 
       if (!user) {
         res.status(404).json({ error: 'User not found' });

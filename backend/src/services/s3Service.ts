@@ -13,11 +13,7 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 // Allowed MIME types
-const ALLOWED_MIME_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'application/pdf',
-];
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 
 // Reject dangerous file extensions
 const DANGEROUS_EXTENSIONS = ['.exe', '.php', '.sh', '.bat', '.cmd'];
@@ -35,7 +31,9 @@ export class S3Service {
     const log = getLogger();
     // Validate MIME type
     if (!ALLOWED_MIME_TYPES.includes(contentType)) {
-      throw new Error(`Unsupported file type: ${contentType}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`);
+      throw new Error(
+        `Unsupported file type: ${contentType}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`,
+      );
     }
 
     // Check file extension
@@ -66,10 +64,12 @@ export class S3Service {
   static async validateFile(key: string): Promise<{ size: number; contentType: string }> {
     const log = getLogger();
     try {
-      const head = await s3.headObject({
-        Bucket: env.S3_BUCKET_NAME,
-        Key: key,
-      }).promise();
+      const head = await s3
+        .headObject({
+          Bucket: env.S3_BUCKET_NAME,
+          Key: key,
+        })
+        .promise();
 
       const size = head.ContentLength || 0;
       const contentType = head.ContentType || 'application/octet-stream';

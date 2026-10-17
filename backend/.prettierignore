@@ -1,0 +1,18 @@
+# Build output
+dist
+
+# Test coverage reports (generated)
+coverage
+
+# Dependencies
+node_modules
+
+# Prisma migration SQL (generated)
+prisma/migrations
+
+# Docs and lockfile
+*.md
+package-lock.json
+
+# Uploads directory (user content, not source)
+uploads

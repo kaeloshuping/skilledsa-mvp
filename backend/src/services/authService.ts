@@ -156,7 +156,11 @@ export class AuthService {
     log.info('[BE1] - Tokens refreshed', { userId: user.id });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password_hash, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, accessToken: newAccessToken, refreshToken: newRefreshToken };
+    return {
+      user: userWithoutPassword,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
   }
 
   /**

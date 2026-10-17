@@ -1,5 +1,5 @@
-import prisma from "../config/database.js";
-import { Prisma } from "@prisma/client";
+import prisma from '../config/database.js';
+import { Prisma } from '@prisma/client';
 
 /**
  * Generic repository class providing basic CRUD operations.

@@ -121,12 +121,7 @@ export class VerificationService {
   /**
    * Admin: approve a verification request.
    */
-  static async approve(
-    requestId: string,
-    adminId: string,
-    requestIdLog: string,
-    notes?: string,
-  ) {
+  static async approve(requestId: string, adminId: string, requestIdLog: string, notes?: string) {
     const log = getLogger(requestIdLog);
     const request = await prisma.verificationRequest.findUnique({
       where: { id: requestId },
@@ -179,12 +174,7 @@ export class VerificationService {
   /**
    * Admin: reject a verification request.
    */
-  static async reject(
-    requestId: string,
-    adminId: string,
-    requestIdLog: string,
-    reason: string,
-  ) {
+  static async reject(requestId: string, adminId: string, requestIdLog: string, reason: string) {
     const log = getLogger(requestIdLog);
     const request = await prisma.verificationRequest.findUnique({
       where: { id: requestId },

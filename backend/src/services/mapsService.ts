@@ -16,11 +16,11 @@ interface GoogleDistanceMatrixResponse {
       status: string; // "OK" | "NOT_FOUND" | "ZERO_RESULTS"
       distance?: {
         value: number; // meters
-        text: string;  // e.g. "12.3 km"
+        text: string; // e.g. "12.3 km"
       };
       duration?: {
         value: number; // seconds
-        text: string;  // e.g. "15 mins"
+        text: string; // e.g. "15 mins"
       };
     }>;
   }>;

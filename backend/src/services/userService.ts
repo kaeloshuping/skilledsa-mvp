@@ -54,8 +54,7 @@ export class UserService {
 
     if (user.travelFeeLastChangedAt) {
       const daysSince =
-        (Date.now() - new Date(user.travelFeeLastChangedAt).getTime()) /
-        (1000 * 60 * 60 * 24);
+        (Date.now() - new Date(user.travelFeeLastChangedAt).getTime()) / (1000 * 60 * 60 * 24);
 
       if (daysSince < 30) {
         if (isAdminOverride) {
@@ -106,9 +105,8 @@ export class UserService {
       updateData.notification_preference = data.notificationPrefs as Prisma.InputJsonValue;
     }
     if (feeFields.travelFeePerKm !== undefined) {
-      (
-        updateData as Prisma.UserUpdateInput & { travelFeePerKm?: number }
-      ).travelFeePerKm = feeFields.travelFeePerKm;
+      (updateData as Prisma.UserUpdateInput & { travelFeePerKm?: number }).travelFeePerKm =
+        feeFields.travelFeePerKm;
     }
     if (feeFields.travelFeeLastChangedAt !== undefined) {
       (
