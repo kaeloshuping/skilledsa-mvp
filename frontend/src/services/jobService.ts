@@ -108,16 +108,26 @@ export interface ContractorStats {
 }
 
 export class JobService {
-  static async getPresignedUrl(fileName: string, contentType: string): Promise<{ url: string; key: string }> {
+  static async getPresignedUrl(
+    fileName: string,
+    contentType: string,
+  ): Promise<{ url: string; key: string }> {
     log.info('Getting presigned URL', { fileName });
-    const response = await apiClient.post<{ url: string; key: string }>('/verification/presigned-url', {
-      fileName,
-      contentType,
-    });
+    const response = await apiClient.post<{ url: string; key: string }>(
+      '/verification/presigned-url',
+      {
+        fileName,
+        contentType,
+      },
+    );
     return response.data;
   }
 
-  static async uploadFileToS3(url: string, file: File, onProgress?: (progress: number) => void): Promise<void> {
+  static async uploadFileToS3(
+    url: string,
+    file: File,
+    onProgress?: (progress: number) => void,
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('PUT', url);
@@ -127,7 +137,8 @@ export class JobService {
           onProgress(Math.round((event.loaded / event.total) * 100));
         }
       };
-      xhr.onload = () => (xhr.status === 200 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+      xhr.onload = () =>
+        xhr.status === 200 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`));
       xhr.onerror = () => reject(new Error('Network error during upload'));
       xhr.send(file);
     });
@@ -164,7 +175,11 @@ export class JobService {
     return response.data.data;
   }
 
-  static async getContractorStats(contractorId: string, trade?: string, city?: string): Promise<ContractorStats> {
+  static async getContractorStats(
+    contractorId: string,
+    trade?: string,
+    city?: string,
+  ): Promise<ContractorStats> {
     log.info('Fetching contractor stats', { contractorId, trade, city });
     const response = await apiClient.get<ContractorStats>(`/contractors/${contractorId}/stats`, {
       params: { trade, city },

@@ -40,7 +40,12 @@ export const CustomerDashboard: React.FC = () => {
           const response = err.response;
           if (response && typeof response === 'object' && 'data' in response) {
             const data = response.data;
-            if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
+            if (
+              data &&
+              typeof data === 'object' &&
+              'message' in data &&
+              typeof data.message === 'string'
+            ) {
               message = data.message;
             }
           }
@@ -107,11 +112,7 @@ export const CustomerDashboard: React.FC = () => {
           >
             👤 Profile
           </button>
-          <button
-            className={styles.menuButton}
-            onClick={handleLogout}
-            title="Log out"
-          >
+          <button className={styles.menuButton} onClick={handleLogout} title="Log out">
             🚪 Logout
           </button>
         </div>
@@ -121,20 +122,13 @@ export const CustomerDashboard: React.FC = () => {
       {!isVerified && (
         <div className={styles.verificationBanner}>
           <span>⚠️ Complete your verification to post jobs and receive quotes.</span>
-          <button
-            className={styles.verifyButton}
-            onClick={() => navigate('/verify')}
-          >
+          <button className={styles.verifyButton} onClick={() => navigate('/verify')}>
             Verify Now
           </button>
         </div>
       )}
 
-      {isVerified && (
-        <div className={styles.verifiedBadge}>
-          ✅ Verified Account
-        </div>
-      )}
+      {isVerified && <div className={styles.verifiedBadge}>✅ Verified Account</div>}
 
       {/* Stats Cards */}
       <div className={styles.statsGrid}>
@@ -151,22 +145,18 @@ export const CustomerDashboard: React.FC = () => {
         <div className={styles.statCard} onClick={() => handleStatClick('completed')}>
           <span className={styles.statNumber}>{stats?.completed ?? 0}</span>
           <span className={styles.statLabel}>Completed Jobs</span>
-          {stats?.completed === 0 && <span className={styles.statHint}>Complete a job to see it here</span>}
+          {stats?.completed === 0 && (
+            <span className={styles.statHint}>Complete a job to see it here</span>
+          )}
         </div>
       </div>
 
       {/* Quick Actions */}
       <div className={styles.quickActions}>
-        <button
-          className={styles.primaryButton}
-          onClick={handlePostJobClick}
-        >
+        <button className={styles.primaryButton} onClick={handlePostJobClick}>
           ➕ Post a Job
         </button>
-        <button
-          className={styles.secondaryButton}
-          onClick={() => navigate('/contractors')}
-        >
+        <button className={styles.secondaryButton} onClick={() => navigate('/contractors')}>
           🔍 Browse Contractors
         </button>
       </div>
@@ -187,10 +177,7 @@ export const CustomerDashboard: React.FC = () => {
             <div className={styles.emptyIcon}>📋</div>
             <p>You haven't posted any jobs yet.</p>
             <p className={styles.emptySubtext}>Get started by posting your first job!</p>
-            <button
-              className={styles.primaryButton}
-              onClick={handlePostJobClick}
-            >
+            <button className={styles.primaryButton} onClick={handlePostJobClick}>
               Post a Job
             </button>
           </div>
@@ -218,14 +205,11 @@ export const CustomerDashboard: React.FC = () => {
         title="Verification Required"
       >
         <p className={styles.modalText}>
-          You need to verify your identity first before you can post jobs.
-          This helps us keep the platform safe for everyone.
+          You need to verify your identity first before you can post jobs. This helps us keep the
+          platform safe for everyone.
         </p>
         <div className={styles.modalActions}>
-          <button
-            className={styles.modalSecondary}
-            onClick={() => setShowVerifyModal(false)}
-          >
+          <button className={styles.modalSecondary} onClick={() => setShowVerifyModal(false)}>
             Cancel
           </button>
           <button

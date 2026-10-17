@@ -26,9 +26,10 @@ export const BrowseJobCard: React.FC<BrowseJobCardProps> = ({ job }) => {
     }
   })();
 
-  const thumbnail = photos && photos.length > 0
-    ? photos[0]
-    : 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23D5CFC0" width="100" height="100"/%3E%3Ctext x="50" y="55" font-family="Arial" font-size="14" text-anchor="middle" fill="%237F8C8D"%3ENo image%3C/text%3E%3C/svg%3E';
+  const thumbnail =
+    photos && photos.length > 0
+      ? photos[0]
+      : 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23D5CFC0" width="100" height="100"/%3E%3Ctext x="50" y="55" font-family="Arial" font-size="14" text-anchor="middle" fill="%237F8C8D"%3ENo image%3C/text%3E%3C/svg%3E';
 
   return (
     <Link to={`/contractor/jobs/${id}`} className={styles.cardLink}>

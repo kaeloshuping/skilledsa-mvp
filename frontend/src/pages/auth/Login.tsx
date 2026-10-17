@@ -86,16 +86,10 @@ export const Login: React.FC<LoginProps> = ({ redirectTo = '/' }) => {
           </div>
 
           {(error || localError) && (
-            <div className={styles.errorMessage}>
-              {error || localError}
-            </div>
+            <div className={styles.errorMessage}>{error || localError}</div>
           )}
 
-          <button
-            type="submit"
-            className={styles.primaryButton}
-            disabled={isLoading}
-          >
+          <button type="submit" className={styles.primaryButton} disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Log In'}
           </button>
 

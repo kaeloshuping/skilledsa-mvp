@@ -138,10 +138,14 @@ export const Signup: React.FC<SignupProps> = ({
             />
             {password.length > 0 && (
               <div className={styles.passwordHints}>
-                <p className={passwordIsLongEnough(password) ? styles.hintValid : styles.hintInvalid}>
+                <p
+                  className={passwordIsLongEnough(password) ? styles.hintValid : styles.hintInvalid}
+                >
                   {passwordIsLongEnough(password) ? '✅' : '❌'} At least 8 characters
                 </p>
-                <p className={passwordHasUppercase(password) ? styles.hintValid : styles.hintInvalid}>
+                <p
+                  className={passwordHasUppercase(password) ? styles.hintValid : styles.hintInvalid}
+                >
                   {passwordHasUppercase(password) ? '✅' : '❌'} Contains uppercase letter
                 </p>
                 <p className={passwordHasNumber(password) ? styles.hintValid : styles.hintInvalid}>
@@ -203,16 +207,10 @@ export const Signup: React.FC<SignupProps> = ({
           </div>
 
           {(error || localError) && (
-            <div className={styles.errorMessage}>
-              {error || localError}
-            </div>
+            <div className={styles.errorMessage}>{error || localError}</div>
           )}
 
-          <button
-            type="submit"
-            className={styles.primaryButton}
-            disabled={isLoading}
-          >
+          <button type="submit" className={styles.primaryButton} disabled={isLoading}>
             {isLoading ? 'Creating account...' : 'Sign Up'}
           </button>
 

@@ -40,7 +40,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       (err) => {
         setError('Unable to retrieve location: ' + err.message);
         setIsLoading(false);
-      }
+      },
     );
   };
 

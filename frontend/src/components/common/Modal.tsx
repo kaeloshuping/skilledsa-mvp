@@ -52,7 +52,9 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
         aria-labelledby="modal-title"
       >
         <div className={styles.header}>
-          <h2 id="modal-title" className={styles.title}>{title}</h2>
+          <h2 id="modal-title" className={styles.title}>
+            {title}
+          </h2>
           <button className={styles.closeButton} onClick={onClose} aria-label="Close modal">
             &times;
           </button>

@@ -20,7 +20,10 @@ interface FileUploadProps {
   acceptedTypes?: string[];
   maxSizeMB?: number;
   onFilesChange: (files: UploadedFile[]) => void;
-  onUpload: (file: File, onProgress: (progress: number) => void) => Promise<{ url: string; key: string }>;
+  onUpload: (
+    file: File,
+    onProgress: (progress: number) => void,
+  ) => Promise<{ url: string; key: string }>;
   existingFiles?: UploadedFile[];
 }
 
@@ -88,31 +91,31 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       if (fileObj.status === 'idle') {
         try {
           // Update status to uploading
-          const uploadingFiles = updatedFiles.map(f =>
-            f.id === fileObj.id ? { ...f, status: 'uploading' as const } : f
+          const uploadingFiles = updatedFiles.map((f) =>
+            f.id === fileObj.id ? { ...f, status: 'uploading' as const } : f,
           );
           setFiles(uploadingFiles);
           onFilesChange(uploadingFiles);
 
           const { url, key } = await onUpload(fileObj.file, (progress) => {
             // Update progress
-            const progressFiles = uploadingFiles.map(f =>
-              f.id === fileObj.id ? { ...f, progress } : f
+            const progressFiles = uploadingFiles.map((f) =>
+              f.id === fileObj.id ? { ...f, progress } : f,
             );
             setFiles(progressFiles);
             onFilesChange(progressFiles);
           });
 
           // Mark as done
-          const doneFiles = uploadingFiles.map(f =>
-            f.id === fileObj.id ? { ...f, status: 'done' as const, progress: 100, url, key } : f
+          const doneFiles = uploadingFiles.map((f) =>
+            f.id === fileObj.id ? { ...f, status: 'done' as const, progress: 100, url, key } : f,
           );
           setFiles(doneFiles);
           onFilesChange(doneFiles);
         } catch (error) {
           const errorMsg = (error as Error).message || 'Upload failed';
-          const errorFiles = updatedFiles.map(f =>
-            f.id === fileObj.id ? { ...f, status: 'error' as const, error: errorMsg } : f
+          const errorFiles = updatedFiles.map((f) =>
+            f.id === fileObj.id ? { ...f, status: 'error' as const, error: errorMsg } : f,
           );
           setFiles(errorFiles);
           onFilesChange(errorFiles);
@@ -138,7 +141,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const removeFile = (id: string) => {
-    const updated = files.filter(f => f.id !== id);
+    const updated = files.filter((f) => f.id !== id);
     setFiles(updated);
     onFilesChange(updated);
   };
@@ -176,7 +179,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         <div className={styles.uploadPrompt}>
           <span className={styles.icon}>📁</span>
           <p>Drag & drop or click to upload</p>
-          <small>Accepted: {acceptedTypes.join(', ')} (max {maxSizeMB}MB each)</small>
+          <small>
+            Accepted: {acceptedTypes.join(', ')} (max {maxSizeMB}MB each)
+          </small>
         </div>
         <input
           type="file"
@@ -193,7 +198,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             <li key={fileObj.id} className={styles.fileItem}>
               <span className={styles.fileName}>{fileObj.file.name}</span>
               {renderFileStatus(fileObj)}
-              <button className={styles.removeBtn} onClick={() => removeFile(fileObj.id)}>×</button>
+              <button className={styles.removeBtn} onClick={() => removeFile(fileObj.id)}>
+                ×
+              </button>
             </li>
           ))}
         </ul>

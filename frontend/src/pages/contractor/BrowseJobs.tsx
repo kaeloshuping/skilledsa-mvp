@@ -6,7 +6,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import styles from './BrowseJobs.module.css';
 
-type Trade = 'Plumbing' | 'Electrical' | 'Building' | 'Painting' | 'Carpentry' | 'Appliance Repair' | 'All';
+type Trade =
+  'Plumbing' | 'Electrical' | 'Building' | 'Painting' | 'Carpentry' | 'Appliance Repair' | 'All';
 
 const CITIES: Array<{ value: City; label: string }> = [
   { value: 'all', label: 'All Cities' },
@@ -38,43 +39,46 @@ export const BrowseJobs: React.FC = () => {
 
   const { showToast } = useToast();
 
-  const fetchJobs = useCallback(async (reset = true) => {
-    const currentPage = reset ? 1 : page;
-    setLoading(reset);
-    if (!reset) setLoadingMore(true);
+  const fetchJobs = useCallback(
+    async (reset = true) => {
+      const currentPage = reset ? 1 : page;
+      setLoading(reset);
+      if (!reset) setLoadingMore(true);
 
-    try {
-      const params: {
-        city: City;
-        page: number;
-        limit: number;
-        trade?: string;
-        search?: string;
-      } = {
-        city: selectedCity,
-        page: currentPage,
-        limit: 10,
-      };
+      try {
+        const params: {
+          city: City;
+          page: number;
+          limit: number;
+          trade?: string;
+          search?: string;
+        } = {
+          city: selectedCity,
+          page: currentPage,
+          limit: 10,
+        };
 
-      if (selectedTrade !== 'All') params.trade = selectedTrade;
-      if (searchQuery.trim()) params.search = searchQuery.trim();
+        if (selectedTrade !== 'All') params.trade = selectedTrade;
+        if (searchQuery.trim()) params.search = searchQuery.trim();
 
-      const response = await JobService.getAvailableJobs(params);
-      console.log('[FE2] - Jobs fetched', response);
+        const response = await JobService.getAvailableJobs(params);
+        console.log('[FE2] - Jobs fetched', response);
 
-      if (reset) setJobs(response.data);
-      else setJobs((prev) => [...prev, ...response.data]);
+        if (reset) setJobs(response.data);
+        else setJobs((prev) => [...prev, ...response.data]);
 
-      setPage(response.page);
-      setHasMore(response.page < response.totalPages);
-    } catch (error) {
-      console.error('[FE2] - Fetch jobs error', error);
-      showToast('Failed to load jobs. Please try again.', 'error');
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [selectedCity, selectedTrade, searchQuery, page, showToast]);
+        setPage(response.page);
+        setHasMore(response.page < response.totalPages);
+      } catch (error) {
+        console.error('[FE2] - Fetch jobs error', error);
+        showToast('Failed to load jobs. Please try again.', 'error');
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [selectedCity, selectedTrade, searchQuery, page, showToast],
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -116,16 +120,28 @@ export const BrowseJobs: React.FC = () => {
       <div className={styles.filters}>
         <div className={styles.filterGroup}>
           <label htmlFor="city">City</label>
-          <select id="city" value={selectedCity} onChange={handleCityChange} className={styles.select}>
+          <select
+            id="city"
+            value={selectedCity}
+            onChange={handleCityChange}
+            className={styles.select}
+          >
             {CITIES.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
             ))}
           </select>
         </div>
 
         <div className={styles.filterGroup}>
           <label htmlFor="trade">Trade</label>
-          <select id="trade" value={selectedTrade} onChange={handleTradeChange} className={styles.select}>
+          <select
+            id="trade"
+            value={selectedTrade}
+            onChange={handleTradeChange}
+            className={styles.select}
+          >
             <option value="All">All Trades</option>
             <option value="Plumbing">Plumbing</option>
             <option value="Electrical">Electrical</option>

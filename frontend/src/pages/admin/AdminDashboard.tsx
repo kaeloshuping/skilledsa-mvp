@@ -71,7 +71,9 @@ export const AdminDashboard: React.FC = () => {
           <div className={styles.statCard}>
             <span className={styles.statValue}>{stats?.pending ?? 0}</span>
             <span className={styles.statLabel}>Pending Verifications</span>
-            <Link to="/admin/verifications" className={styles.statLink}>View Queue →</Link>
+            <Link to="/admin/verifications" className={styles.statLink}>
+              View Queue →
+            </Link>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statValue}>{stats?.approvedToday ?? 0}</span>

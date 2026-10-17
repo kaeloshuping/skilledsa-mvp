@@ -10,7 +10,13 @@ interface ToggleProps {
   helperText?: string;
 }
 
-export const Toggle: React.FC<ToggleProps> = ({ checked, onChange, label, disabled, helperText }) => {
+export const Toggle: React.FC<ToggleProps> = ({
+  checked,
+  onChange,
+  label,
+  disabled,
+  helperText,
+}) => {
   return (
     <div className={styles.toggleContainer}>
       <div className={styles.toggleRow}>

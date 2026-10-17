@@ -16,7 +16,7 @@ const TRAVEL_FEE_MAX = 15;
 const TRAVEL_FEE_CHANGE_COOLDOWN_DAYS = 30;
 
 const canChangeTravelFee = (
-  lastChange: string | null | undefined
+  lastChange: string | null | undefined,
 ): { allowed: boolean; nextDate: string | null } => {
   if (!lastChange) return { allowed: true, nextDate: null };
   const last = new Date(lastChange).getTime();
@@ -37,13 +37,13 @@ export const ContractorProfile: React.FC = () => {
   const [city, setCity] = useState(user?.city || 'Johannesburg');
   const [travelFee, setTravelFee] = useState<number>(user?.travel_fee_per_km ?? 10);
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(
-    user?.notification_preference || { email: true, sms: false, push: false }
+    user?.notification_preference || { email: true, sms: false, push: false },
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { allowed: canEditFee, nextDate: feeNextDate } = canChangeTravelFee(
-    user?.last_travel_fee_change
+    user?.last_travel_fee_change,
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,13 +96,21 @@ export const ContractorProfile: React.FC = () => {
       <div className={styles.card}>
         <div className={styles.header}>
           <h1 className={styles.title}>Contractor Profile</h1>
-          <button className={styles.backButton} onClick={() => navigate(-1)}>← Back</button>
+          <button className={styles.backButton} onClick={() => navigate(-1)}>
+            ← Back
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
             <label htmlFor="email">Email (read-only)</label>
-            <input id="email" type="email" value={user?.email || ''} disabled className={styles.readOnly} />
+            <input
+              id="email"
+              type="email"
+              value={user?.email || ''}
+              disabled
+              className={styles.readOnly}
+            />
           </div>
 
           <div className={styles.field}>
@@ -149,7 +157,11 @@ export const ContractorProfile: React.FC = () => {
               onChange={(e) => setCity(e.target.value)}
               disabled={loading}
             >
-              {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              {CITIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -180,15 +192,30 @@ export const ContractorProfile: React.FC = () => {
             <h2 className={styles.sectionTitle}>Bank Details (Payout)</h2>
             <div className={styles.field}>
               <label>Bank Name</label>
-              <input type="text" value={bank?.bank_name || '—'} disabled className={styles.readOnly} />
+              <input
+                type="text"
+                value={bank?.bank_name || '—'}
+                disabled
+                className={styles.readOnly}
+              />
             </div>
             <div className={styles.field}>
               <label>Account Number</label>
-              <input type="text" value={bank?.account_number || '—'} disabled className={styles.readOnly} />
+              <input
+                type="text"
+                value={bank?.account_number || '—'}
+                disabled
+                className={styles.readOnly}
+              />
             </div>
             <div className={styles.field}>
               <label>Branch Code</label>
-              <input type="text" value={bank?.branch_code || '—'} disabled className={styles.readOnly} />
+              <input
+                type="text"
+                value={bank?.branch_code || '—'}
+                disabled
+                className={styles.readOnly}
+              />
             </div>
             <p className={styles.helper}>Contact support to update your bank details.</p>
           </div>

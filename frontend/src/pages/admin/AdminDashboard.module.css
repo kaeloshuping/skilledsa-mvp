@@ -54,7 +54,9 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .logoutButton:hover {
@@ -134,7 +136,9 @@
   text-decoration: none;
   color: var(--color-text-primary);
   font-weight: 500;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .actionCard:hover {

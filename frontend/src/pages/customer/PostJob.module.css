@@ -90,7 +90,9 @@
   background: var(--color-surface);
   font-size: 16px;
   color: var(--color-text-primary);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   font-family: var(--font-body);
 }
 
@@ -140,7 +142,9 @@
   font-weight: 500;
   font-size: 16px;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.1s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.1s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;

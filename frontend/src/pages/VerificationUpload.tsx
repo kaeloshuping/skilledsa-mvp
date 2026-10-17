@@ -46,10 +46,7 @@ export const VerificationUpload: React.FC = () => {
     console.log('[FE1] - VerificationUpload upload mode:', UPLOAD_MODE);
   }, [user, navigate]);
 
-  const handleFileSelect = async (
-    field: FileField,
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileSelect = async (field: FileField, event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
@@ -58,7 +55,10 @@ export const VerificationUpload: React.FC = () => {
     if (!allowedTypes.includes(selectedFile.type)) {
       setFiles((prev) => ({
         ...prev,
-        [field]: { ...prev[field]!, error: 'File type not allowed (JPG, PNG, PDF)' } as UploadedFile,
+        [field]: {
+          ...prev[field]!,
+          error: 'File type not allowed (JPG, PNG, PDF)',
+        } as UploadedFile,
       }));
       return;
     }
@@ -68,7 +68,10 @@ export const VerificationUpload: React.FC = () => {
     if (selectedFile.size > maxSize) {
       setFiles((prev) => ({
         ...prev,
-        [field]: { ...prev[field]!, error: `File size exceeds ${maxSize / (1024 * 1024)}MB` } as UploadedFile,
+        [field]: {
+          ...prev[field]!,
+          error: `File size exceeds ${maxSize / (1024 * 1024)}MB`,
+        } as UploadedFile,
       }));
       return;
     }
@@ -98,7 +101,7 @@ export const VerificationUpload: React.FC = () => {
           {
             fileName: selectedFile.name,
             contentType: selectedFile.type,
-          }
+          },
         );
         const { url, key } = response.data;
         console.log('[FE1] - Presigned URL received', { field, key });
@@ -332,7 +335,9 @@ export const VerificationUpload: React.FC = () => {
             e.preventDefault();
             const droppedFile = e.dataTransfer.files[0];
             if (droppedFile) {
-              const fakeEvent = { target: { files: [droppedFile] } } as unknown as React.ChangeEvent<HTMLInputElement>;
+              const fakeEvent = {
+                target: { files: [droppedFile] },
+              } as unknown as React.ChangeEvent<HTMLInputElement>;
               handleFileSelect(field, fakeEvent);
             }
           }}
@@ -394,10 +399,7 @@ export const VerificationUpload: React.FC = () => {
         <div className={styles.card}>
           <h1 className={styles.title}>Verification Submitted</h1>
           <p>Your documents are being reviewed. You'll receive a notification once verified.</p>
-          <button
-            className={styles.primaryButton}
-            onClick={() => navigate('/dashboard')}
-          >
+          <button className={styles.primaryButton} onClick={() => navigate('/dashboard')}>
             Go to Dashboard
           </button>
         </div>
@@ -410,20 +412,22 @@ export const VerificationUpload: React.FC = () => {
       <div className={styles.card}>
         <h1 className={styles.title}>Verify Your Identity</h1>
         <p className={styles.subtitle}>
-          Please upload the required documents. {user?.role === 'contractor' && 'Contractors must also upload a trade certificate.'}
+          Please upload the required documents.{' '}
+          {user?.role === 'contractor' && 'Contractors must also upload a trade certificate.'}
         </p>
 
         <div className={styles.form}>
           {renderFileUpload('id_photo', 'ID Photo', true)}
           {renderFileUpload('selfie', 'Selfie', true)}
-          {user?.role === 'contractor' && renderFileUpload('certificate', 'Trade Certificate', true)}
+          {user?.role === 'contractor' &&
+            renderFileUpload('certificate', 'Trade Certificate', true)}
 
           {submitError && <div className={styles.errorMessage}>{submitError}</div>}
 
           <button
             className={styles.primaryButton}
             onClick={handleSubmit}
-            disabled={isSubmitting || Object.values(files).some(f => f?.status === 'uploading')}
+            disabled={isSubmitting || Object.values(files).some((f) => f?.status === 'uploading')}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Verification'}
           </button>

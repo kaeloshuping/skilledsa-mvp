@@ -72,12 +72,12 @@ export interface ListUsersResponse {
 
 export class AdminService {
   static async getVerifications(
-    params: FetchVerificationsParams = {}
+    params: FetchVerificationsParams = {},
   ): Promise<{ data: VerificationRequest[]; total: number }> {
     log.info('Fetching verifications', params);
     const response = await apiClient.get<{ data: VerificationRequest[]; total: number }>(
       '/admin/verifications',
-      { params }
+      { params },
     );
     console.log('[FE2] - Fetched verifications:', response.data.total);
     return response.data;

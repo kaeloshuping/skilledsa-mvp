@@ -16,7 +16,7 @@ export const useAuth = () => {
     signup,
     login,
     logout,
-    refreshAccessToken,  // <-- RENAMED
+    refreshAccessToken, // <-- RENAMED
     setTokens,
     clearTokens,
     setUser,
@@ -38,7 +38,7 @@ export const useAuth = () => {
       signup,
       login,
       logout,
-      refreshAccessToken,  // <-- RENAMED
+      refreshAccessToken, // <-- RENAMED
       setTokens,
       clearTokens,
       setUser,
@@ -60,6 +60,6 @@ export const useAuth = () => {
       clearTokens,
       setUser,
       clearError,
-    ]
+    ],
   );
 };

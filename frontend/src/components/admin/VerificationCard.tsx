@@ -74,10 +74,7 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
       )}
 
       <div className={styles.actions}>
-        <VerificationActions
-          verificationId={request.id}
-          onActionComplete={onActionComplete}
-        />
+        <VerificationActions verificationId={request.id} onActionComplete={onActionComplete} />
       </div>
     </div>
   );
