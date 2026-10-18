@@ -40,10 +40,15 @@ export const PostJob: React.FC = () => {
     setPhotos(files);
   };
 
-  const handleUploadPhoto = async (file: File, onProgress: (progress: number) => void) => {
-    const { url, key } = await JobService.getPresignedUrl(file.name, file.type);
-    await JobService.uploadFileToS3(url, file, onProgress);
-    return { url, key };
+  /**
+   * Delegate to JobService.uploadFile, which selects the correct storage
+   * backend at runtime (local multipart POST vs. S3 presigned PUT).
+   */
+  const handleUploadPhoto = (
+    file: File,
+    onProgress: (progress: number) => void,
+  ): Promise<{ url: string; key: string }> => {
+    return JobService.uploadFile(file, onProgress);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

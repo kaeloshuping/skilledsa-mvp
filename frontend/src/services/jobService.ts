@@ -1,8 +1,14 @@
 // src/services/jobService.ts
 import apiClient from './apiClient';
+import { useAuthStore } from '../stores/authStore';
 import { getLogger } from '../utils/logger';
 
 const log = getLogger('jobService');
+
+// Upload mode is fixed at build time by Vite. Any value other than an
+// explicit 's3' falls back to 'local' so a missing or malformed value
+// cannot silently route traffic to a misconfigured S3 bucket.
+const UPLOAD_MODE: 'local' | 's3' = import.meta.env.VITE_UPLOAD_MODE === 's3' ? 's3' : 'local';
 
 // --- Customer job creation types ---
 export interface JobPhotoUpload {
@@ -108,6 +114,91 @@ export interface ContractorStats {
 }
 
 export class JobService {
+  /**
+   * Upload a file using the currently configured storage backend.
+   *
+   * - `local` mode: POSTs `multipart/form-data` to the backend's
+   *   `/api/v1/upload` endpoint, which writes to disk and returns the
+   *   public URL and storage key.
+   * - `s3` mode: obtains a presigned URL from the backend and PUTs the
+   *   file directly to S3.
+   *
+   * Both paths return `{ url, key }` so callers can treat them uniformly.
+   */
+  static async uploadFile(
+    file: File,
+    onProgress?: (progress: number) => void,
+  ): Promise<{ url: string; key: string }> {
+    if (UPLOAD_MODE === 'local') {
+      return JobService.uploadFileLocal(file, onProgress);
+    }
+    const { url, key } = await JobService.getPresignedUrl(file.name, file.type);
+    await JobService.uploadFileToS3(url, file, onProgress);
+    return { url, key };
+  }
+
+  /**
+   * Local-mode upload: POST multipart/form-data to the backend.
+   * Uses XHR (not fetch/axios) so upload progress can be tracked, and
+   * so the request is not subject to the apiClient's JSON Content-Type
+   * default, which would break multipart parsing.
+   */
+  private static async uploadFileLocal(
+    file: File,
+    onProgress?: (progress: number) => void,
+  ): Promise<{ url: string; key: string }> {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
+
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'jobs');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${baseUrl}/upload`);
+
+      const { accessToken } = useAuthStore.getState();
+      if (accessToken) {
+        xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+      }
+      // Content-Type is set automatically by XHR for multipart/form-data,
+      // including the required boundary token.
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && onProgress) {
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (typeof data.url !== 'string' || typeof data.key !== 'string') {
+              reject(new Error('Upload response missing url or key'));
+              return;
+            }
+            resolve({ url: data.url, key: data.key });
+          } catch {
+            reject(new Error('Invalid response from upload server'));
+          }
+        } else {
+          let message = `Upload failed with status ${xhr.status}`;
+          try {
+            const data = JSON.parse(xhr.responseText);
+            message = data.error || data.message || message;
+          } catch {
+            // Response body was not JSON; use the default message.
+          }
+          reject(new Error(message));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(formData);
+    });
+  }
+
   static async getPresignedUrl(
     fileName: string,
     contentType: string,
