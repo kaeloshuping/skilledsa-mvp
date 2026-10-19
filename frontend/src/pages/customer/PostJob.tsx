@@ -102,7 +102,9 @@ export const PostJob: React.FC = () => {
         address: address.trim(),
         city,
         needsConsultation,
-        travelFeeWilling,
+        // UI state name (travelFeeWilling) maps to the API field
+        // name (travelFeeAccepted) which matches the backend schema.
+        travelFeeAccepted: travelFeeWilling,
       });
 
       showToast('Job posted successfully! 🎉', 'success');
