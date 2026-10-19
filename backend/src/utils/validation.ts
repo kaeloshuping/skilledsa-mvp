@@ -83,38 +83,60 @@ export const verificationReviewSchema = z.object({
 // ============================================================
 
 /**
- * Schema for creating a job.
+ * Base job fields, shared between create and update.
  *
- * `city` is required (used for city-based filtering; matches the
- * `Job.city` column added by BE2 in the add_manual_location_fields
- * migration). `address` is optional.
+ * Coordinates are optional. Job matching during development relies on
+ * the manual `city` and `address` fields; the Google Distance Matrix
+ * integration that will supply exact coordinates is deferred to the
+ * production phase. When coordinates are eventually provided, the
+ * PostGIS `location` column is populated automatically by the service.
  */
-export const createJobSchema = z.object({
+const jobFieldsSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
   trade: z.string().min(1, 'Trade is required'),
   photos: z.array(z.string().url()).optional().default([]),
-  locationLat: z.number().min(-90).max(90, 'Latitude must be between -90 and 90'),
-  locationLng: z.number().min(-180).max(180, 'Longitude must be between -180 and 180'),
+  locationLat: z
+    .number()
+    .min(-90, 'Latitude must be between -90 and 90')
+    .max(90, 'Latitude must be between -90 and 90')
+    .optional(),
+  locationLng: z
+    .number()
+    .min(-180, 'Longitude must be between -180 and 180')
+    .max(180, 'Longitude must be between -180 and 180')
+    .optional(),
   needsConsultation: z.boolean().default(false),
   travelFeeAccepted: z.boolean().default(true),
-  // Manual location fields (BE2, Sprint 3)
   city: z.string().min(1, 'City is required'),
   address: z.string().optional(),
 });
 
 /**
- * Schema for updating a job.
- * `.partial()` makes every field optional — including `city`/`address`.
+ * Create-job schema.
+ *
+ * Because coordinates are optional as a pair, `locationLat` and
+ * `locationLng` must either both be present or both be absent. A
+ * single coordinate is meaningless for the PostGIS point and would
+ * produce a NULL geometry, so the pairing is enforced at the schema
+ * layer.
  */
-export const updateJobSchema = createJobSchema.partial();
+export const createJobSchema = jobFieldsSchema.refine(
+  (data) =>
+    (data.locationLat === undefined && data.locationLng === undefined) ||
+    (data.locationLat !== undefined && data.locationLng !== undefined),
+  { message: 'locationLat and locationLng must be provided together' },
+);
 
 /**
- * BUG-002 FIX: Valid JobStatus values as defined in the CURRENT
- * Prisma schema. The previous list contained obsolete enum members
- * (`milestone1_pending`, `milestone1_verified`, `milestone2_pending`,
- * `disputed`) that were removed by migration 20260820160419_.
- * Keeping those here caused TS2345 in JobController.listJobs.
+ * Update-job schema.
+ * All fields optional; the coordinate-pairing rule does not apply
+ * because partial updates may legitimately leave one untouched.
+ */
+export const updateJobSchema = jobFieldsSchema.partial();
+
+/**
+ * Valid JobStatus values, matching the Prisma enum.
  */
 const jobStatusEnum = z.enum([
   'draft',
@@ -127,15 +149,7 @@ const jobStatusEnum = z.enum([
 ]);
 
 /**
- * Schema for listing jobs with query filters.
- * `city` takes precedence over lat/lng/radius.
- *
- * BUG-002/BUG-003 notes:
- *  - `status` no longer defaults to 'open'. The controller now decides
- *    the effective status per-role (customer → unrestricted; contractor
- *    → forced to 'open'). Defaulting here was hiding that policy.
- *  - `limit` added so the client can bound response sizes (bounded at
- *    50 to prevent enumeration blow-ups).
+ * List-jobs query schema. `city` takes precedence over lat/lng/radius.
  */
 export const listJobsQuerySchema = z.object({
   trade: z.string().optional(),
@@ -143,7 +157,7 @@ export const listJobsQuerySchema = z.object({
   customerId: z.string().uuid().optional(),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
-  radius: z.coerce.number().positive().default(35), // in km
+  radius: z.coerce.number().positive().default(35),
   travelFeeAccepted: z.coerce.boolean().optional(),
   status: jobStatusEnum.optional(),
   limit: z.coerce.number().int().positive().max(50).default(20),

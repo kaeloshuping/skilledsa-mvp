@@ -7,7 +7,7 @@ const log = getLogger('jobService');
 
 // Upload mode is fixed at build time by Vite. Any value other than an
 // explicit 's3' falls back to 'local' so a missing or malformed value
-// cannot silently route traffic to a misconfigured S3 bucket.
+// cannot silently route traffic to a misconfigured bucket.
 const UPLOAD_MODE: 'local' | 's3' = import.meta.env.VITE_UPLOAD_MODE === 's3' ? 's3' : 'local';
 
 // --- Customer job creation types ---
@@ -17,6 +17,17 @@ export interface JobPhotoUpload {
   key: string;
 }
 
+/**
+ * Payload for POST /api/v1/jobs.
+ *
+ * `travelFeeAccepted` matches the backend schema field name. The UI
+ * toggles a "willing to pay travel fee" state; PostJob maps that to
+ * this field on submit.
+ *
+ * Coordinates are optional. During development job matching relies
+ * on the manual `city` and `address` fields; Google Distance Matrix
+ * integration will supply coordinates once that feature is enabled.
+ */
 export interface CreateJobData {
   title: string;
   description: string;
@@ -25,23 +36,31 @@ export interface CreateJobData {
   address: string;
   city: string;
   needsConsultation: boolean;
-  travelFeeWilling: boolean;
+  travelFeeAccepted: boolean;
+  locationLat?: number;
+  locationLng?: number;
 }
 
+/**
+ * Shape of a Job returned by the backend. Field names mirror the
+ * Prisma model (camelCase) as serialized over JSON.
+ */
 export interface Job {
   id: string;
   title: string;
   description: string;
   trade: string;
   photos: string[];
-  address: string;
+  address: string | null;
   city: string;
   needsConsultation: boolean;
-  travelFeeWilling: boolean;
+  travelFeeAccepted: boolean;
+  locationLat: number | null;
+  locationLng: number | null;
   status: string;
-  customer_id: string;
-  created_at: string;
-  updated_at: string;
+  customerId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface JobStats {
@@ -236,7 +255,7 @@ export class JobService {
   }
 
   static async createJob(data: CreateJobData): Promise<Job> {
-    log.info('Creating job', data);
+    log.info('Creating job', { title: data.title, trade: data.trade });
     const response = await apiClient.post<Job>('/jobs', data);
     return response.data;
   }
