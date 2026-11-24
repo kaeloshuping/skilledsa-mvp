@@ -15,6 +15,7 @@ enum Role {
 
 enum VerificationStatus {
   pending
+  under_review
   verified
   rejected
 }
@@ -49,10 +50,6 @@ model User {
   notification_preference Json?
   popia_consent           Boolean             @default(false)
   data_retention_date     DateTime?
-  // BUG-001 FIX: `address` and `city` were present in the migrations
-  // (add_manual_location_fields) but missing from this schema after a
-  // branch merge. Restored to match migration history.
-  // DO NOT remove without generating a new migration.
   address                 String?
   city                    String?
   created_at              DateTime            @default(now())
@@ -147,29 +144,15 @@ model Job {
   description         String
   trade               String
   photos              String[]
-  // ─────────────────────────────────────────────────────────────
-  // NOTE ON `location`:
-  //   This is an `Unsupported("geography(Point, 4326)")` column.
-  //   Prisma cannot express GIST indexes on Unsupported fields in
-  //   schema language, so the mandatory index `idx_job_location`
-  //   (TDD §3.3) is created via raw SQL in migration
-  //   `20260820153105_add_jobs_quotes`.
-  //
-  //   DO NOT let `prisma migrate dev` generate a migration that drops
-  //   this index. If Prisma prompts you to reconcile drift here,
-  //   cancel the prompt — the drift is intentional and required.
-  //
-  //   All writes to `location` go through `$executeRaw` in
-  //   `jobService.createJob` and `jobService.updateJob`.
-  // ─────────────────────────────────────────────────────────────
+  // PostGIS geography is Unsupported in Prisma; the mandatory GIST
+  // index idx_job_location is managed via raw SQL in migration
+  // 20260820153105_add_jobs_quotes. If `prisma migrate dev` offers to
+  // drop this index, cancel the prompt — the drift is intentional.
   location            Unsupported("geography(Point, 4326)")?
   locationLat         Float?
   locationLng         Float?
   needsConsultation   Boolean                             @default(false)
   travelFeeAccepted   Boolean                             @default(true)
-  // BUG-001 FIX: `address` and `city` restored to match
-  // the add_manual_location_fields migration.
-  // `city` MUST remain required to match the migration's NOT NULL.
   address             String?
   city                String
   status              JobStatus                           @default(open)
