@@ -3,7 +3,10 @@ import { env } from '../config/env.js';
 import { getLogger } from '../utils/logger.js';
 import { S3Service } from './s3Service.js';
 
-// Mock email service (logs to console in dev).
+/**
+ * Mock email service (logs to console in dev). Replace with the
+ * SendGrid integration during the production-phase notifications sprint.
+ */
 const sendEmail = (to: string, subject: string, text: string) => {
   const log = getLogger();
   log.info('[BE1] - Email (dev) sent', { to, subject, text });
@@ -12,15 +15,11 @@ const sendEmail = (to: string, subject: string, text: string) => {
 /**
  * Extract the storage key from an upload URL.
  *
- * Upload URLs are constructed by uploadRoutes.ts as:
+ * Upload URLs are constructed by uploadRoutes.ts as
  *   `${env.API_URL}/uploads/${key}`
- * For example:
- *   http://localhost:3000/api/v1/uploads/misc/<uuid>.png
- * The storage key is everything after `/uploads/`:
- *   misc/<uuid>.png
- *
- * Rejects URLs that do not point to our uploads path, and any key that
- * contains traversal sequences. Called before any storage access.
+ * so the storage key is everything after the `/uploads/` marker.
+ * Rejects URLs that do not point at our uploads path, and any key
+ * containing traversal sequences or a leading slash.
  */
 const extractKey = (url: string): string => {
   const marker = '/uploads/';
@@ -44,8 +43,12 @@ const extractKey = (url: string): string => {
 export class VerificationService {
   /**
    * Submit a verification request for a user.
-   * Confirms the referenced files exist in storage, then upserts the
-   * VerificationRequest row.
+   *
+   * Rejects a second submission while one is already pending or after
+   * the user has been verified. Confirms every referenced file exists
+   * in the active storage backend, then upserts the VerificationRequest
+   * and transitions the user into `under_review` in a single
+   * transaction. The user stays `under_review` until an admin decides.
    */
   static async submit(
     userId: string,
@@ -78,28 +81,40 @@ export class VerificationService {
         await S3Service.validateFile(certKey);
       }
 
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (!user) throw new Error('User not found');
+      const verification = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.findUnique({ where: { id: userId } });
+        if (!user) throw new Error('User not found');
 
-      const verification = await prisma.verificationRequest.upsert({
-        where: { user_id: userId },
-        update: {
-          id_photo_url: data.id_photo_url,
-          selfie_url: data.selfie_url,
-          certificate_url: data.certificate_url || null,
-          status: 'pending',
-          admin_notes: null,
-          admin_id: null,
-          reviewed_at: null,
-        },
-        create: {
-          user_id: userId,
-          role: user.role,
-          id_photo_url: data.id_photo_url,
-          selfie_url: data.selfie_url,
-          certificate_url: data.certificate_url,
-          status: 'pending',
-        },
+        const upserted = await tx.verificationRequest.upsert({
+          where: { user_id: userId },
+          update: {
+            id_photo_url: data.id_photo_url,
+            selfie_url: data.selfie_url,
+            certificate_url: data.certificate_url || null,
+            status: 'pending',
+            admin_notes: null,
+            admin_id: null,
+            reviewed_at: null,
+          },
+          create: {
+            user_id: userId,
+            role: user.role,
+            id_photo_url: data.id_photo_url,
+            selfie_url: data.selfie_url,
+            certificate_url: data.certificate_url,
+            status: 'pending',
+          },
+        });
+
+        // Transition the user into under_review in the same
+        // transaction, so the dashboard reflects the submitted state
+        // immediately and consistently.
+        await tx.user.update({
+          where: { id: userId },
+          data: { verification_status: 'under_review' },
+        });
+
+        return upserted;
       });
 
       log.info('[BE1] - Verification request submitted', { userId });
@@ -113,7 +128,7 @@ export class VerificationService {
   }
 
   /**
-   * Get the verification status of a user.
+   * Get the verification request for a user.
    */
   static async getStatus(userId: string) {
     return prisma.verificationRequest.findUnique({
@@ -122,7 +137,7 @@ export class VerificationService {
   }
 
   /**
-   * Admin: get pending verification requests, oldest first.
+   * Admin: pending verification requests, oldest first.
    */
   static async getPendingQueue() {
     return prisma.verificationRequest.findMany({
@@ -144,7 +159,7 @@ export class VerificationService {
 
   /**
    * Admin: approve a verification request.
-   * Marks the request verified, promotes the user, and writes an audit log.
+   * Marks the request verified, promotes the user, writes an audit log.
    */
   static async approve(requestId: string, adminId: string, requestIdLog: string, notes?: string) {
     const log = getLogger(requestIdLog);
@@ -202,7 +217,8 @@ export class VerificationService {
 
   /**
    * Admin: reject a verification request.
-   * Marks the request rejected, updates the user, and writes an audit log.
+   * Marks the request rejected, updates the user, writes an audit log.
+   * The user can submit a new request after rejection.
    */
   static async reject(requestId: string, adminId: string, requestIdLog: string, reason: string) {
     const log = getLogger(requestIdLog);
